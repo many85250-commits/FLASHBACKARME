@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Flashback — Gestionnaire de Forge & Labo</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0b0d12;
+  --surface:rgba(17,19,24,0.97);
+  --surface2:rgba(26,29,37,0.75);
+  --surface3:#1e2130;
+  --border:rgba(35,38,47,0.8);
+  --border2:#2a2d3a;
+  --purple:#8b5cf6;
+  --purple2:#7c3aed;
+  --green:#22c55e;
+  --green2:#4ade80;
+  --text:#e2e4ea;
+  --muted:#8b9ab5;
+  --muted2:#555;
+  --danger:#ef4444;
+  /* Theme tokens — violet par défaut */
+  --T1:#8b5cf6;--T2:#7c3aed;--T3:#6d28d9;
+  --T4:#a78bfa;--T5:#c084fc;
+  --Tg1:rgba(139,92,246,0.35);--Tg2:rgba(139,92,246,0.12);
+  --Tg3:rgba(139,92,246,0.2);--Tg4:rgba(139,92,246,0.08);
+  --Tg5:rgba(139,92,246,0.18);--Tg6:rgba(139,92,246,0.06);
+  --Tg7:rgba(139,92,246,0.1);--Tg8:rgba(139,92,246,0.15);
+  --Tg9:rgba(139,92,246,0.4);
+}
+body{
+  font-family:'Exo 2',sans-serif;
+  background:linear-gradient(135deg,rgba(11,13,18,0.95),rgba(14,10,22,0.95)),
+    url('https://images.unsplash.com/photo-1595590424283-b8f17842773f?q=80&w=1000') no-repeat center center fixed;
+  background-size:cover;
+  color:var(--text);
+  display:flex;height:100vh;overflow:hidden;
+}
+
+/* SIDEBAR */
+.sidebar{width:195px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;box-shadow:4px 0 20px rgba(0,0,0,0.4);}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--Tg4),transparent);}
+.logo-box{background:linear-gradient(135deg,var(--T1),var(--T3));border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:900;font-size:22px;color:#fff;box-shadow:0 0 15px var(--Tg1);flex-shrink:0;}
+.logo-text{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#fff;letter-spacing:1px;line-height:1.3;}
+.logo-sub{font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;}
+.sidebar-nav{padding:14px 10px;flex:1;}
+.nav-label{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:6px 12px 8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13.5px;font-weight:500;transition:all .2s;margin-bottom:3px;user-select:none;position:relative;border:1px solid transparent;}
+.nav-item:hover{background:var(--Tg6);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--Tg5),var(--Tg4));color:#fff;border-color:var(--Tg3);}
+.nav-item.active::before{content:'';position:absolute;left:-1px;top:50%;transform:translateY(-50%);width:3px;height:55%;background:var(--T1);border-radius:0 3px 3px 0;}
+.sidebar-footer{padding:14px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--muted2);text-align:center;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 25px;display:flex;align-items:center;gap:15px;flex-shrink:0;box-shadow:0 2px 20px rgba(0,0,0,0.3);overflow:visible !important;}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:#fff;letter-spacing:1px;flex:1;}
+.topbar-clock{font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--muted);background:var(--surface3);border:1px solid var(--border2);padding:5px 13px;border-radius:6px;letter-spacing:1px;}
+
+/* CONTENT */
+.content-hub{flex:1;display:flex;overflow:hidden;}
+.workspace{flex:1;padding:25px;overflow-y:auto;display:flex;flex-direction:column;gap:25px;}
+
+/* SECTIONS */
+.hub-section-title{font-family:'Rajdhani',sans-serif;font-size:19px;font-weight:700;color:#fff;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:15px;text-transform:uppercase;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.section-accent{color:var(--T1);}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:5px;}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px;transition:all .2s;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--T1),transparent);}
+.stat-card:hover{border-color:var(--Tg3);transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.3);}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.8px;}
+.stat-value{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;}
+.stat-sub{font-size:11px;color:var(--muted);}
+
+/* ITEMS GRID */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;}
+.item-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:10px;transition:all .2s;}
+.item-card:hover{border-color:var(--T1);background:rgba(30,31,48,0.9);transform:translateY(-2px);box-shadow:0 8px 25px var(--Tg2);}
+.item-card-top{display:flex;justify-content:space-between;align-items:center;}
+.item-price{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:var(--green2);}
+.item-img-placeholder{font-size:30px;text-align:center;margin:5px 0;}
+.item-label{font-size:14px;font-weight:600;color:#fff;}
+.item-card-actions{display:flex;align-items:center;gap:5px;margin-top:5px;}
+
+/* LABO */
+.labo-list{display:flex;flex-direction:column;gap:12px;}
+.labo-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:15px;cursor:pointer;transition:all .2s;}
+.labo-item:hover{border-color:var(--T1);background:rgba(30,31,48,0.9);transform:translateX(4px);}
+.labo-item.selected{border-color:var(--T1);background:var(--Tg7);box-shadow:0 0 20px var(--Tg2);}
+.labo-thumb{width:90px;height:60px;background:rgba(11,13,18,0.6);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border);}
+.labo-thumb img{max-width:90%;max-height:90%;object-fit:contain;}
+.labo-info{flex:1;display:flex;flex-direction:column;gap:5px;}
+.labo-name{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#fff;}
+.labo-badges{display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
+.bt{background:var(--Tg8);border:1px solid var(--Tg9);color:var(--T4);font-size:11px;font-weight:700;padding:2px 9px;border-radius:5px;font-family:'Rajdhani',sans-serif;}
+
+/* FORM */
+.form-transaction{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-wrap:wrap;gap:15px;align-items:flex-end;}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px;}
+.form-group label{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;}
+.form-input{background:rgba(11,13,18,0.7);border:1px solid var(--border2);color:#fff;padding:10px 12px;border-radius:7px;font-family:inherit;font-size:14px;outline:none;transition:all .15s;}
+.form-input:focus{border-color:var(--T1);box-shadow:0 0 0 2px var(--Tg7);}
+.btn-submit{background:linear-gradient(135deg,var(--T1),var(--T2));color:white;border:none;padding:10px 22px;border-radius:7px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:all .2s;height:40px;box-shadow:0 4px 15px var(--Tg1);}
+.btn-submit:hover{background:linear-gradient(135deg,var(--T2),var(--T3));transform:translateY(-1px);box-shadow:0 6px 20px var(--Tg1);}
+.btn-submit:active{transform:translateY(0);}
+
+/* SEARCH */
+.search-wrap{display:flex;align-items:center;gap:8px;background:rgba(11,13,18,0.6);border:1px solid var(--border2);border-radius:8px;padding:8px 13px;transition:border-color .15s;}
+.search-wrap:focus-within{border-color:var(--T1);}
+.search-input{background:none;border:none;color:#fff;font-family:inherit;font-size:14px;outline:none;width:200px;}
+.search-input::placeholder{color:var(--muted2);}
+
+/* FILTER CHIPS */
+.filter-row{display:flex;align-items:center;gap:7px;}
+.chip{background:var(--surface3);border:1px solid var(--border2);color:var(--muted);font-size:12px;font-weight:600;padding:5px 13px;border-radius:20px;cursor:pointer;transition:all .15s;font-family:'Rajdhani',sans-serif;}
+.chip:hover{border-color:var(--T1);color:#fff;}
+.chip.active{background:var(--Tg7);border-color:var(--T1);color:var(--T4);}
+
+/* BACKUP BUTTONS */
+.backup-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.btn-backup{background:var(--surface3);border:1px solid var(--border2);color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;padding:6px 13px;border-radius:7px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.btn-backup:hover{background:rgba(255,255,255,0.05);border-color:var(--T1);color:#fff;}
+
+/* TABLE */
+.table-container{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.histo-table{width:100%;border-collapse:collapse;text-align:left;font-size:14px;}
+.histo-table th{background:var(--surface3);font-family:'Rajdhani',sans-serif;text-transform:uppercase;font-weight:700;padding:13px 16px;color:var(--muted);border-bottom:1px solid var(--border);font-size:12px;letter-spacing:0.5px;}
+.histo-table th.sortable{cursor:pointer;user-select:none;}
+.histo-table th.sortable:hover{color:#fff;}
+.sort-icon{margin-left:4px;opacity:0.4;font-size:11px;}
+.histo-table td{padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.03);}
+.histo-table tr:hover td{background:var(--Tg4);}
+.histo-table tr.row-new td{animation:rowGlow .5s ease;}
+@keyframes rowGlow{from{background:var(--Tg5);}to{background:transparent;}}
+.btn-delete{background:none;border:none;color:var(--danger);cursor:pointer;opacity:0.5;padding:5px;border-radius:5px;transition:all .15s;}
+.btn-delete:hover{opacity:1;background:rgba(239,68,68,0.1);}
+.client-badge{display:inline-flex;align-items:center;background:var(--Tg7);border:1px solid var(--Tg3);border-radius:5px;padding:3px 9px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--T4);}
+.arme-badge{display:inline-flex;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-family:'Rajdhani',sans-serif;font-size:13px;color:#ddd;}
+
+/* MANUAL INPUTS */
+.manual-input{background:rgba(11,13,18,0.7);border:1px solid var(--border2);color:#fff;text-align:center;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;border-radius:6px;width:60px;padding:5px;outline:none;transition:border-color .15s;}
+.manual-input:focus{border-color:var(--T1);}
+.btn-qty{background:var(--surface3);border:1px solid var(--border2);color:#fff;font-weight:bold;width:28px;height:28px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;user-select:none;transition:all .15s;}
+.btn-qty:hover{background:var(--T1);border-color:var(--T1);}
+
+/* CART */
+.cart{width:370px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.cart-header{padding:16px;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,var(--Tg4),transparent);}
+.cart-items{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+.cart-section-title{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:5px;margin-bottom:2px;}
+.cart-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:10px;border:1px solid var(--border);}
+.cart-info{flex:1;min-width:0;}
+.cart-name{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:#fff;}
+.cart-sub{font-size:11px;color:var(--muted);}
+.cart-qty-ctrl{display:flex;align-items:center;gap:4px;}
+.cart-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.cart-price{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--green2);}
+.weapon-config-box{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:13px;display:flex;flex-direction:column;gap:10px;}
+.weapon-config-header{display:flex;align-items:center;justify-content:space-between;}
+.weapon-config-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;}
+.weapon-config-qty{display:flex;align-items:center;gap:5px;}
+.weapon-summary-lines{background:rgba(0,0,0,0.25);padding:10px;border-radius:7px;font-size:13px;display:flex;flex-direction:column;gap:6px;}
+.weapon-summary-line{display:flex;justify-content:space-between;align-items:center;}
+.weapon-summary-line span{color:var(--muted);}
+.weapon-summary-line strong{font-family:'Rajdhani',sans-serif;font-weight:700;}
+.cart-footer{padding:15px;border-top:1px solid var(--border);}
+.total-bar{background:linear-gradient(135deg,var(--T1),var(--T2));border-radius:10px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;box-shadow:0 4px 15px var(--Tg1);}
+.total-label{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;}
+.total-val{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;}
+
+/* DASHBOARD */
+.dash-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.dash-chart-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.dash-chart-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.8px;}
+.dash-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.dash-bar-label{font-size:12px;color:var(--muted);width:85px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dash-bar-wrap{flex:1;background:rgba(255,255,255,0.05);border-radius:5px;height:20px;overflow:hidden;}
+.dash-bar-fill{height:100%;border-radius:5px;transition:width .8s cubic-bezier(.4,0,.2,1);background:var(--T1);}
+.dash-bar-val{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#fff;width:55px;text-align:right;flex-shrink:0;}
+
+/* TITANE RECAP */
+.titane-recap{display:none;background:var(--Tg4);border:1px solid var(--Tg3);border-radius:10px;padding:13px 18px;margin-bottom:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty-icon{font-size:44px;margin-bottom:14px;opacity:0.4;}
+.empty-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:7px;}
+.empty-sub{font-size:13px;}
+
+/* TOAST */
+#toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;min-width:270px;box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:toastIn .3s ease;pointer-events:all;}
+.toast.success{border-color:rgba(74,222,128,0.35);}
+.toast.error{border-color:rgba(239,68,68,0.35);}
+.toast-body{flex:1;}
+.toast-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.toast-msg{font-size:12px;color:var(--muted);margin-top:2px;}
+.toast-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 5px;}
+.toast-close:hover{color:#fff;}
+@keyframes toastIn{from{opacity:0;transform:translateX(25px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toastOut{from{opacity:1;}to{opacity:0;transform:translateX(25px);}}
+.toast.out{animation:toastOut .25s ease forwards;}
+
+/* TABLE COUNT */
+.table-count{text-align:right;font-size:12px;color:var(--muted);margin-top:8px;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--T1);}
+
+/* EDIT MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:16px;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+.btn-modal-cancel{background:var(--surface3);border:1px solid var(--border2);color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;padding:8px 18px;border-radius:7px;cursor:pointer;transition:all .15s;}
+.btn-modal-cancel:hover{background:rgba(255,255,255,0.05);}
+.btn-modal-save{background:linear-gradient(135deg,var(--T1),var(--T2));color:white;border:none;padding:8px 22px;border-radius:7px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+.btn-modal-save:hover{background:linear-gradient(135deg,var(--T2),var(--T3));}
+
+/* SIDEBAR */
+.sidebar{width:195px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;box-shadow:4px 0 20px rgba(0,0,0,0.4);}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--Tg4),transparent);}
+.logo-box{background:linear-gradient(135deg,var(--T1),var(--T3));border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:900;font-size:22px;color:#fff;box-shadow:0 0 15px var(--Tg1);flex-shrink:0;}
+.logo-text{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#fff;letter-spacing:1px;line-height:1.3;}
+.logo-sub{font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;}
+.sidebar-nav{padding:14px 10px;flex:1;}
+.nav-label{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:6px 12px 8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13.5px;font-weight:500;transition:all .2s;margin-bottom:3px;user-select:none;position:relative;border:1px solid transparent;}
+.nav-item:hover{background:var(--Tg6);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--Tg5),var(--Tg4));color:#fff;border-color:var(--Tg3);}
+.nav-item.active::before{content:'';position:absolute;left:-1px;top:50%;transform:translateY(-50%);width:3px;height:55%;background:var(--T1);border-radius:0 3px 3px 0;}
+.sidebar-footer{padding:14px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--muted2);text-align:center;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 25px;display:flex;align-items:center;gap:15px;flex-shrink:0;box-shadow:0 2px 20px rgba(0,0,0,0.3);}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:#fff;letter-spacing:1px;flex:1;}
+.topbar-clock{font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--muted);background:var(--surface3);border:1px solid var(--border2);padding:5px 13px;border-radius:6px;letter-spacing:1px;}
+
+/* CONTENT */
+.content-hub{flex:1;display:flex;overflow:hidden;}
+.workspace{flex:1;padding:25px;overflow-y:auto;display:flex;flex-direction:column;gap:25px;}
+
+/* SECTIONS */
+.hub-section-title{font-family:'Rajdhani',sans-serif;font-size:19px;font-weight:700;color:#fff;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:15px;text-transform:uppercase;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.section-accent{color:var(--T1);}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:5px;}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px;transition:all .2s;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--T1),transparent);}
+.stat-card:hover{border-color:var(--Tg3);transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.3);}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.8px;}
+.stat-value{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;}
+.stat-sub{font-size:11px;color:var(--muted);}
+
+/* ITEMS GRID */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;}
+.item-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:10px;transition:all .2s;}
+.item-card:hover{border-color:var(--T1);background:rgba(30,31,48,0.9);transform:translateY(-2px);box-shadow:0 8px 25px var(--Tg2);}
+.item-card-top{display:flex;justify-content:space-between;align-items:center;}
+.item-price{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:var(--green2);}
+.item-img-placeholder{font-size:30px;text-align:center;margin:5px 0;}
+.item-label{font-size:14px;font-weight:600;color:#fff;}
+.item-card-actions{display:flex;align-items:center;gap:5px;margin-top:5px;}
+
+/* LABO */
+.labo-list{display:flex;flex-direction:column;gap:12px;}
+.labo-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:15px;cursor:pointer;transition:all .2s;}
+.labo-item:hover{border-color:var(--T1);background:rgba(30,31,48,0.9);transform:translateX(4px);}
+.labo-item.selected{border-color:var(--T1);background:var(--Tg7);box-shadow:0 0 20px var(--Tg2);}
+.labo-thumb{width:90px;height:60px;background:rgba(11,13,18,0.6);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border);}
+.labo-thumb img{max-width:90%;max-height:90%;object-fit:contain;}
+.labo-info{flex:1;display:flex;flex-direction:column;gap:5px;}
+.labo-name{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#fff;}
+.labo-badges{display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
+.bt{background:var(--Tg8);border:1px solid var(--Tg9);color:var(--T4);font-size:11px;font-weight:700;padding:2px 9px;border-radius:5px;font-family:'Rajdhani',sans-serif;}
+
+/* FORM */
+.form-transaction{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-wrap:wrap;gap:15px;align-items:flex-end;}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px;}
+.form-group label{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;}
+.form-input{background:rgba(11,13,18,0.7);border:1px solid var(--border2);color:#fff;padding:10px 12px;border-radius:7px;font-family:inherit;font-size:14px;outline:none;transition:all .15s;}
+.form-input:focus{border-color:var(--T1);box-shadow:0 0 0 2px var(--Tg7);}
+.btn-submit{background:linear-gradient(135deg,var(--T1),var(--T2));color:white;border:none;padding:10px 22px;border-radius:7px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:all .2s;height:40px;box-shadow:0 4px 15px var(--Tg1);}
+.btn-submit:hover{background:linear-gradient(135deg,var(--T2),var(--T3));transform:translateY(-1px);box-shadow:0 6px 20px var(--Tg1);}
+.btn-submit:active{transform:translateY(0);}
+
+/* SEARCH */
+.search-wrap{display:flex;align-items:center;gap:8px;background:rgba(11,13,18,0.6);border:1px solid var(--border2);border-radius:8px;padding:8px 13px;transition:border-color .15s;}
+.search-wrap:focus-within{border-color:var(--T1);}
+.search-input{background:none;border:none;color:#fff;font-family:inherit;font-size:14px;outline:none;width:200px;}
+.search-input::placeholder{color:var(--muted2);}
+
+/* FILTER CHIPS */
+.filter-row{display:flex;align-items:center;gap:7px;}
+.chip{background:var(--surface3);border:1px solid var(--border2);color:var(--muted);font-size:12px;font-weight:600;padding:5px 13px;border-radius:20px;cursor:pointer;transition:all .15s;font-family:'Rajdhani',sans-serif;}
+.chip:hover{border-color:var(--T1);color:#fff;}
+.chip.active{background:var(--Tg7);border-color:var(--T1);color:var(--T4);}
+
+/* BACKUP BUTTONS */
+.backup-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.btn-backup{background:var(--surface3);border:1px solid var(--border2);color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;padding:6px 13px;border-radius:7px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.btn-backup:hover{background:rgba(255,255,255,0.05);border-color:var(--T1);color:#fff;}
+
+/* TABLE */
+.table-container{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.histo-table{width:100%;border-collapse:collapse;text-align:left;font-size:14px;}
+.histo-table th{background:var(--surface3);font-family:'Rajdhani',sans-serif;text-transform:uppercase;font-weight:700;padding:13px 16px;color:var(--muted);border-bottom:1px solid var(--border);font-size:12px;letter-spacing:0.5px;}
+.histo-table th.sortable{cursor:pointer;user-select:none;}
+.histo-table th.sortable:hover{color:#fff;}
+.sort-icon{margin-left:4px;opacity:0.4;font-size:11px;}
+.histo-table td{padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.03);}
+.histo-table tr:hover td{background:var(--Tg6);}
+.histo-table tr.row-new td{animation:rowGlow .5s ease;}
+@keyframes rowGlow{from{background:var(--Tg5);}to{background:transparent;}}
+.btn-delete{background:none;border:none;color:var(--danger);cursor:pointer;opacity:0.5;padding:5px;border-radius:5px;transition:all .15s;}
+.btn-delete:hover{opacity:1;background:rgba(239,68,68,0.1);}
+.client-badge{display:inline-flex;align-items:center;background:var(--Tg7);border:1px solid var(--Tg3);border-radius:5px;padding:3px 9px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--T4);}
+.arme-badge{display:inline-flex;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-family:'Rajdhani',sans-serif;font-size:13px;color:#ddd;}
+
+/* MANUAL INPUTS */
+.manual-input{background:rgba(11,13,18,0.7);border:1px solid var(--border2);color:#fff;text-align:center;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;border-radius:6px;width:60px;padding:5px;outline:none;transition:border-color .15s;}
+.manual-input:focus{border-color:var(--T1);}
+.btn-qty{background:var(--surface3);border:1px solid var(--border2);color:#fff;font-weight:bold;width:28px;height:28px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;user-select:none;transition:all .15s;}
+.btn-qty:hover{background:var(--T1);border-color:var(--T1);}
+
+/* CART */
+.cart{width:370px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.cart-header{padding:16px;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,var(--Tg6),transparent);}
+.cart-items{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+.cart-section-title{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:5px;margin-bottom:2px;}
+.cart-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:10px;border:1px solid var(--border);}
+.cart-info{flex:1;min-width:0;}
+.cart-name{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:#fff;}
+.cart-sub{font-size:11px;color:var(--muted);}
+.cart-qty-ctrl{display:flex;align-items:center;gap:4px;}
+.cart-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.cart-price{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--green2);}
+.weapon-config-box{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:13px;display:flex;flex-direction:column;gap:10px;}
+.weapon-config-header{display:flex;align-items:center;justify-content:space-between;}
+.weapon-config-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;}
+.weapon-config-qty{display:flex;align-items:center;gap:5px;}
+.weapon-summary-lines{background:rgba(0,0,0,0.25);padding:10px;border-radius:7px;font-size:13px;display:flex;flex-direction:column;gap:6px;}
+.weapon-summary-line{display:flex;justify-content:space-between;align-items:center;}
+.weapon-summary-line span{color:var(--muted);}
+.weapon-summary-line strong{font-family:'Rajdhani',sans-serif;font-weight:700;}
+.cart-footer{padding:15px;border-top:1px solid var(--border);}
+.total-bar{background:linear-gradient(135deg,var(--T1),var(--T2));border-radius:10px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;box-shadow:0 4px 15px var(--Tg1);}
+.total-label{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;}
+.total-val{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;}
+
+/* DASHBOARD */
+.dash-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.dash-chart-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.dash-chart-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.8px;}
+.dash-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.dash-bar-label{font-size:12px;color:var(--muted);width:85px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dash-bar-wrap{flex:1;background:rgba(255,255,255,0.05);border-radius:5px;height:20px;overflow:hidden;}
+.dash-bar-fill{height:100%;border-radius:5px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.dash-bar-val{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#fff;width:55px;text-align:right;flex-shrink:0;}
+
+/* TITANE RECAP */
+.titane-recap{display:none;background:var(--Tg4);border:1px solid var(--Tg3);border-radius:10px;padding:13px 18px;margin-bottom:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty-icon{font-size:44px;margin-bottom:14px;opacity:0.4;}
+.empty-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:7px;}
+.empty-sub{font-size:13px;}
+
+/* TOAST */
+#toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;min-width:270px;box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:toastIn .3s ease;pointer-events:all;}
+.toast.success{border-color:rgba(74,222,128,0.35);}
+.toast.error{border-color:rgba(239,68,68,0.35);}
+.toast-body{flex:1;}
+.toast-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.toast-msg{font-size:12px;color:var(--muted);margin-top:2px;}
+.toast-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 5px;}
+.toast-close:hover{color:#fff;}
+@keyframes toastIn{from{opacity:0;transform:translateX(25px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toastOut{from{opacity:1;}to{opacity:0;transform:translateX(25px);}}
+.toast.out{animation:toastOut .25s ease forwards;}
+
+/* TABLE COUNT */
+.table-count{text-align:right;font-size:12px;color:var(--muted);margin-top:8px;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--T1);}
+
+/* ===================== CYBERPUNK ENHANCEMENTS ===================== */
+
+/* SCANLINES removed for performance */
+
+/* Particles canvas */
+#particles-canvas{display:none;}
+
+/* Ensure UI is above canvas */
+.sidebar,.main,.cart{position:relative;z-index:1;}
+#toast-container{z-index:9999;}
+
+/* ============================================================
+   THEME SYSTEM — tout l'UI utilise ces variables
+   ============================================================ */
+:root{
+  /* Couleurs primaires du thème — violet par défaut */
+  --T1:#8b5cf6;   /* primary */
+  --T2:#7c3aed;   /* primary dark */
+  --T3:#6d28d9;   /* primary darker */
+  --T4:#a78bfa;   /* light */
+  --T5:#c084fc;   /* ultra light */
+  --Tg1:rgba(139,92,246,0.35);  /* glow strong */
+  --Tg2:rgba(139,92,246,0.12);  /* glow soft */
+  --Tg3:rgba(139,92,246,0.2);   /* border accent */
+  --Tg4:rgba(139,92,246,0.08);  /* bg tint */
+  --Tg5:rgba(139,92,246,0.18);  /* nav active bg */
+  --Tg6:rgba(139,92,246,0.06);  /* hover tint */
+  --Tg7:rgba(139,92,246,0.1);   /* subtle tint */
+  --Tg8:rgba(139,92,246,0.15);  /* badge bg */
+  --Tg9:rgba(139,92,246,0.4);   /* badge border */
+  /* Keep --purple for compat */
+  --purple:var(--T1);--purple2:var(--T2);
+}
+
+/* ---- RED SANG ---- */
+body.theme-red{
+  --T1:#ef4444;--T2:#dc2626;--T3:#b91c1c;
+  --T4:#f87171;--T5:#fca5a5;
+  --Tg1:rgba(239,68,68,0.35);--Tg2:rgba(239,68,68,0.12);
+  --Tg3:rgba(239,68,68,0.2);--Tg4:rgba(239,68,68,0.08);
+  --Tg5:rgba(239,68,68,0.18);--Tg6:rgba(239,68,68,0.06);
+  --Tg7:rgba(239,68,68,0.1);--Tg8:rgba(239,68,68,0.15);
+  --Tg9:rgba(239,68,68,0.4);
+  --purple:#ef4444;--purple2:#dc2626;
+}
+
+/* ---- MATRIX VERT ---- */
+body.theme-matrix{
+  --T1:#22c55e;--T2:#16a34a;--T3:#15803d;
+  --T4:#4ade80;--T5:#86efac;
+  --Tg1:rgba(34,197,94,0.35);--Tg2:rgba(34,197,94,0.12);
+  --Tg3:rgba(34,197,94,0.2);--Tg4:rgba(34,197,94,0.08);
+  --Tg5:rgba(34,197,94,0.18);--Tg6:rgba(34,197,94,0.06);
+  --Tg7:rgba(34,197,94,0.1);--Tg8:rgba(34,197,94,0.15);
+  --Tg9:rgba(34,197,94,0.4);
+  --purple:#22c55e;--purple2:#16a34a;
+  --bg:#030b03;--surface:rgba(5,17,7,0.97);--surface2:rgba(8,24,10,0.75);--surface3:#0a1f0c;
+  --border:rgba(20,48,25,0.8);--border2:#1a3a1e;
+}
+
+/* ============================================================
+   ELEMENTS QUI UTILISENT LE THEME
+   ============================================================ */
+
+/* Logo box */
+.logo-box{background:linear-gradient(135deg,var(--T1),var(--T3)) !important;box-shadow:0 0 15px var(--Tg1) !important;}
+
+/* Sidebar logo bg */
+.sidebar-logo{background:linear-gradient(135deg,var(--Tg4),transparent) !important;}
+
+/* Nav active */
+.nav-item.active{background:linear-gradient(135deg,var(--Tg5),var(--Tg4)) !important;border-color:var(--Tg3) !important;color:#fff !important;}
+.nav-item.active::before{background:var(--T1) !important;}
+.nav-item:hover{background:var(--Tg6) !important;}
+
+/* Topbar clock */
+.topbar-clock{border-color:var(--border2);}
+
+/* Stat cards accent line */
+.stat-card::before{background:linear-gradient(90deg,var(--T1),transparent) !important;}
+
+/* Buttons */
+.btn-submit{background:linear-gradient(135deg,var(--T1),var(--T2)) !important;box-shadow:0 4px 15px var(--Tg1) !important;}
+.btn-submit:hover{background:linear-gradient(135deg,var(--T2),var(--T3)) !important;box-shadow:0 6px 20px var(--Tg1) !important;}
+.btn-modal-save{background:linear-gradient(135deg,var(--T1),var(--T2)) !important;}
+.btn-modal-save:hover{background:linear-gradient(135deg,var(--T2),var(--T3)) !important;}
+.btn-qty:hover{background:var(--T1) !important;border-color:var(--T1) !important;}
+.btn-backup:hover{border-color:var(--T1) !important;color:#fff !important;}
+
+/* Cart total bar */
+.total-bar{background:linear-gradient(135deg,var(--T1),var(--T2)) !important;box-shadow:0 4px 15px var(--Tg1) !important;}
+
+/* Cart header */
+.cart-header{background:linear-gradient(135deg,var(--Tg4),transparent) !important;}
+
+/* Filter chips */
+.chip.active{background:var(--Tg7) !important;border-color:var(--T1) !important;color:var(--T4) !important;}
+.chip:hover{border-color:var(--T1) !important;color:#fff !important;}
+
+/* Search focus */
+.search-wrap:focus-within{border-color:var(--T1) !important;}
+.form-input:focus{border-color:var(--T1) !important;box-shadow:0 0 0 2px var(--Tg7) !important;}
+
+/* Client badge */
+.client-badge{background:var(--Tg7) !important;border-color:var(--Tg9) !important;color:var(--T4) !important;}
+
+/* Labo item hover/selected */
+.labo-item:hover{border-color:var(--T1) !important;}
+.labo-item.selected{border-color:var(--T1) !important;background:var(--Tg7) !important;}
+
+/* Item card hover */
+.item-card:hover{border-color:var(--T1) !important;box-shadow:0 8px 25px var(--Tg2) !important;}
+
+/* Section accent */
+.section-accent{color:var(--T1) !important;}
+
+/* Badges (bt) */
+.bt{background:var(--Tg8) !important;border-color:var(--Tg9) !important;color:var(--T5) !important;}
+
+/* Hub section title separators */
+.hub-section-title{border-color:var(--border) !important;}
+
+/* Dashboard bars */
+.dash-bar-fill{background:var(--T1) !important;}
+
+/* Cart badge */
+#cart-badge{background:var(--Tg7) !important;border-color:var(--Tg9) !important;color:var(--T4) !important;}
+
+/* Table sort hover */
+.histo-table th.sortable:hover{color:var(--T4) !important;}
+.histo-table tr:hover td{background:var(--Tg4) !important;}
+
+/* Scrollbar */
+::-webkit-scrollbar-thumb:hover{background:var(--T1) !important;}
+
+/* Compact toggle active */
+.compact-toggle.on .compact-toggle-box{background:var(--T1) !important;}
+
+/* Titane recap */
+.titane-recap{background:var(--Tg4) !important;border-color:var(--Tg3) !important;}
+
+/* Modal */
+.modal-box{box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+
+/* Labo item base tint (atelier items) */
+.labo-item[style*="rgba(139"]{border-color:var(--Tg3) !important;background:var(--Tg4) !important;}
+
+/* THEME SWITCHER BUTTON */
+.theme-switcher{display:flex;gap:6px;align-items:center;margin-left:auto;overflow:visible;position:relative;}
+.theme-dot{
+  width:18px;height:18px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:all .2s;flex-shrink:0;
+}
+.theme-dot:hover{transform:scale(1.25);}
+.theme-dot.active{border-color:#fff;box-shadow:0 0 10px currentColor;}
+.theme-dot-violet{background:radial-gradient(circle at 35% 35%,#c084fc,#7c3aed);}
+.theme-dot-red{background:radial-gradient(circle at 35% 35%,#fca5a5,#dc2626);}
+.theme-dot-matrix{background:radial-gradient(circle at 35% 35%,#86efac,#16a34a);}
+.theme-dot-black{background:radial-gradient(circle at 35% 35%,#555,#000);}
+.theme-dot-white{background:radial-gradient(circle at 35% 35%,#fff,#c0c5d1);border:1px solid rgba(0,0,0,0.2);}
+.theme-label{
+  font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;
+  color:var(--muted);letter-spacing:0.5px;min-width:38px;
+  transition:color .2s;pointer-events:none;
+}
+
+/* COMPACT MODE toggle */
+.compact-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;font-size:12px;color:var(--muted);transition:color .2s;}
+.compact-toggle:hover{color:#fff;}
+.compact-toggle-box{width:30px;height:16px;background:var(--border2);border-radius:8px;position:relative;transition:background .2s;flex-shrink:0;}
+.compact-toggle-box::after{content:'';position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s,background .2s;}
+.compact-toggle.on .compact-toggle-box{background:var(--T1);}
+.compact-toggle.on .compact-toggle-box::after{transform:translateX(14px);}
+
+/* COMPACT MODE for labo items */
+body.compact .labo-item{padding:9px 13px;}
+body.compact .labo-thumb{width:50px;height:36px;font-size:18px !important;}
+body.compact .labo-name{font-size:15px;}
+body.compact .labo-info > div:nth-child(2),
+body.compact .labo-info > div:nth-child(3){font-size:11px;}
+body.compact .labo-item .bt{font-size:10px;padding:1px 7px;}
+body.compact .hub-section-title{font-size:16px;padding-bottom:7px;margin-bottom:10px;}
+
+/* GLOW PULSE on selected cards */
+.labo-item.selected{
+  box-shadow:0 0 12px var(--Tg1),0 0 0 1px var(--T1);
+}
+
+/* TITANE PROGRESS BAR in cart */
+.titane-progress-wrap{margin-top:8px;background:rgba(0,0,0,0.3);border-radius:6px;overflow:hidden;height:6px;border:1px solid var(--Tg3);}
+.titane-progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--T1),var(--T4));transition:width .6s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;}
+/* shimmer removed */
+.titane-info-row{display:flex;justify-content:space-between;align-items:center;margin-top:5px;}
+.titane-info-label{font-size:11px;color:var(--muted);}
+.titane-info-val{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--T4);}
+
+/* TOOLTIPS — z-index élevé, overflow visible sur topbar */
+.topbar{overflow:visible !important;}
+.theme-switcher{overflow:visible;}
+[data-tip]{position:relative;}
+[data-tip]{position:relative;}
+[data-tip]::before{
+  content:attr(data-tip);
+  position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%) scale(0.88);
+  background:rgba(8,10,18,0.98);border:1px solid var(--T1);color:#e2e4ea;
+  font-size:11px;font-family:'Exo 2',sans-serif;font-weight:600;
+  padding:5px 11px;border-radius:7px;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .18s,transform .18s;z-index:99999;
+  box-shadow:0 4px 20px rgba(0,0,0,0.7),0 0 8px var(--Tg2);
+}
+[data-tip]::after{
+  content:'';position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-bottom-color:var(--T1);
+  opacity:0;transition:opacity .18s;pointer-events:none;z-index:99999;
+}
+[data-tip]:hover::before{opacity:1;transform:translateX(-50%) scale(1);}
+[data-tip]:hover::after{opacity:1;}
+
+/* ===================== EFFETS VISUELS ===================== */
+
+#page-loader{display:none;}
+
+/* GLITCH sur le logo — sans clip-path qui casse les dots */
+.logo-box{cursor:default;transition:all .2s;}
+/* glitch animations removed */
+
+/* RIPPLE sur boutons */
+/* ripple removed */
+
+/* STAT CARDS — glow au hover */
+.stat-card{transition:all .25s;}
+.stat-card:hover{
+  border-color:var(--T1) !important;
+  box-shadow:0 0 20px var(--Tg2),0 8px 30px rgba(0,0,0,0.4) !important;
+  transform:translateY(-3px) !important;
+}
+.stat-card:hover .stat-value{
+  text-shadow:0 0 20px currentColor;
+}
+
+/* VIEW TRANSITION — slide + fade */
+.view-content{display:none;flex-direction:column;gap:25px;width:100%;}
+.view-content.active{display:flex;}
+/* view slide animations removed */
+
+/* nav item underline removed */
+
+/* CART ITEMS — slide in */
+/* cartItemIn removed */
+/* cart animations removed */
+
+/* TOPBAR PAGE TITLE — morph */
+.page-title{transition:opacity .2s,transform .2s;}
+.page-title.switching{opacity:0;transform:translateY(-4px);}
+
+/* labo-item active scale removed */
+
+/* DOTS thème — pulse ring au hover */
+/* theme-dot ::before removed */
+
+/* section title animation removed */
+
+/* EDIT MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:16px;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+.btn-modal-cancel{background:var(--surface3);border:1px solid var(--border2);color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;padding:8px 18px;border-radius:7px;cursor:pointer;transition:all .15s;}
+.btn-modal-cancel:hover{background:rgba(255,255,255,0.05);}
+.btn-modal-save{background:linear-gradient(135deg,var(--T1),var(--T2));color:white;border:none;padding:8px 22px;border-radius:7px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+.btn-modal-save:hover{background:linear-gradient(135deg,var(--T2),var(--T3));}
+
+/* ---- NOIR ---- */
+body.theme-black{
+  --T1:#e2e4ea;--T2:#c0c5d1;--T3:#9aa0b0;
+  --T4:#ffffff;--T5:#f0f2f7;
+  --Tg1:rgba(226,228,234,0.35);--Tg2:rgba(226,228,234,0.12);
+  --Tg3:rgba(226,228,234,0.2);--Tg4:rgba(226,228,234,0.08);
+  --Tg5:rgba(226,228,234,0.18);--Tg6:rgba(226,228,234,0.06);
+  --Tg7:rgba(226,228,234,0.1);--Tg8:rgba(226,228,234,0.15);
+  --Tg9:rgba(226,228,234,0.4);
+  --purple:#e2e4ea;--purple2:#c0c5d1;
+  --bg:#000000;--surface:rgba(8,8,8,0.97);--surface2:rgba(14,14,14,0.75);--surface3:#111111;
+  --border:rgba(30,30,30,0.8);--border2:#222222;
+}
+
+/* ---- BLANC ---- */
+body.theme-white{
+  --T1:#1a1a2e;--T2:#0f0f1a;--T3:#050510;
+  --T4:#333355;--T5:#555577;
+  --Tg1:rgba(26,26,46,0.35);--Tg2:rgba(26,26,46,0.12);
+  --Tg3:rgba(26,26,46,0.2);--Tg4:rgba(26,26,46,0.06);
+  --Tg5:rgba(26,26,46,0.15);--Tg6:rgba(26,26,46,0.04);
+  --Tg7:rgba(26,26,46,0.08);--Tg8:rgba(26,26,46,0.1);
+  --Tg9:rgba(26,26,46,0.3);
+  --purple:#1a1a2e;--purple2:#0f0f1a;
+  --bg:#f0f2f7;--surface:rgba(255,255,255,0.98);--surface2:rgba(240,242,247,0.9);--surface3:#e8eaf0;
+  --border:rgba(200,205,220,0.8);--border2:#c8cdd8;
+  --text:#1a1a2e;--muted:#555577;--muted2:#8888aa;
+}
+
+</style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+<div id="page-loader"></div>
+<div id="toast-container"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-box"><svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="60,5 25,55 48,55 40,95 75,45 52,45" fill="white" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg></div>
+    <div>
+      <div class="logo-text">FLASHBACK</div>
+      <div class="logo-sub">Forge & Laboratoire</div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-label">Navigation</div>
+    <div class="nav-item active" id="nav-atelier" onclick="switchView('atelier')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      Atelier Unique
+    </div>
+    <div class="nav-item" id="nav-historique" onclick="switchView('historique')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Historique
+    </div>
+    <div class="nav-item" id="nav-dashboard" onclick="switchView('dashboard')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-version">v4.0 — Flashback</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="main-page-title">Atelier Unique</div>
+    <!-- THEME SWITCHER -->
+    <div class="theme-switcher" id="theme-switcher-wrap">
+      <div class="theme-dot theme-dot-violet active" id="dot-violet" onclick="setTheme('violet')"></div>
+      <div class="theme-dot theme-dot-red" id="dot-red" onclick="setTheme('red')"></div>
+      <div class="theme-dot theme-dot-matrix" id="dot-matrix" onclick="setTheme('matrix')"></div>
+      <div class="theme-dot theme-dot-black" id="dot-black" onclick="setTheme('black')" data-tip="Noir"></div>
+      <div class="theme-dot theme-dot-white" id="dot-white" onclick="setTheme('white')" data-tip="Blanc"></div>
+      <span class="theme-label" id="theme-label">Violet</span>
+    </div>
+    <!-- COMPACT MODE -->
+    <div class="compact-toggle" id="compact-toggle-btn" onclick="toggleCompact()" title="Mode compact" style="display:flex;">
+      <div class="compact-toggle-box"></div>
+      <span>Compact</span>
+    </div>
+    <div class="topbar-clock" id="topbar-clock">--:--:--</div>
+  </div>
+
+  <div class="content-hub">
+    <div class="workspace">
+
+      <!-- ATELIER -->
+      <div id="view-atelier-content" class="view-content active">
+        <div>
+          <div class="hub-section-title" style="color:var(--T4);">Boutique <span style="color:var(--T2);">—</span> Acier</div>
+          <div class="labo-list">
+            <div class="labo-item" id="card-acier" onclick="toggleMetalCard('acier')" style="cursor:pointer;border-color:var(--Tg3);background:var(--Tg6);">
+              <div class="labo-thumb" style="font-size:26px;background:var(--Tg4);border-color:var(--Tg3);">🪨</div>
+              <div class="labo-info">
+                <div class="labo-name">Acier Simple</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Métal de base — Vente directe</div>
+                <div style="font-size:12px;color:var(--T4);margin-top:2px;">Prix : $75 / unité</div>
+              </div>
+              <div class="labo-badges">
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Métal brut de base">🪨 Métal</div>
+                <div class="bt" id="acier-badge-qty" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Prix unitaire de vente">$75 / u</div>
+              </div>
+            </div>
+            <div class="labo-item" id="card-compact" onclick="toggleMetalCard('compact')" style="cursor:pointer;border-color:var(--Tg3);background:var(--Tg6);">
+              <div class="labo-thumb" style="font-size:26px;background:var(--Tg4);border-color:var(--Tg3);">🔩</div>
+              <div class="labo-info">
+                <div class="labo-name">Acier Compacté</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Métal compacté — Vente directe</div>
+                <div style="font-size:12px;color:var(--T4);margin-top:2px;">Prix : $375 / unité</div>
+              </div>
+              <div class="labo-badges">
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Acier pressé haute densité">🔩 Métal</div>
+                <div class="bt" id="compact-badge-qty" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Prix unitaire de vente">$375 / u</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="hub-section-title" style="color:var(--T4);">Catalogue <span style="color:var(--T2);">—</span> Armes</div>
+          <div class="labo-list" id="labo-list-target">
+            <div class="labo-item" id="card-weapon-berreta" onclick="selectWeapon('berreta')" style="cursor:pointer;border-color:var(--Tg3);background:var(--Tg6);">
+              <div class="labo-thumb" style="background:var(--Tg4);border-color:var(--Tg3);"><img src="berreta.png" onerror="this.style.display='none';this.parentNode.innerHTML='🔫'"></div>
+              <div class="labo-info">
+                <div class="labo-name">Beretta</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Par arme : 25 Acier · 5 Compacté</div>
+                <div style="font-size:12px;color:var(--T4);margin-top:2px;">Temps forge : 90s</div>
+              </div>
+              <div class="labo-badges">
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Durée de forge par arme">90s</div>
+                <div class="bt" style="background:var(--Tg7);border-color:var(--Tg9);color:var(--T5);" data-tip="Nécessite 1 titane pour 2 armes">💎 Titane Requis</div>
+              </div>
+            </div>
+            <div class="labo-item" id="card-weapon-glock" onclick="selectWeapon('glock')" style="cursor:pointer;border-color:var(--Tg3);background:var(--Tg6);">
+              <div class="labo-thumb" style="background:var(--Tg4);border-color:var(--Tg3);"><img src="glock.png" onerror="this.style.display='none';this.parentNode.innerHTML='🔫'"></div>
+              <div class="labo-info">
+                <div class="labo-name">Glock</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Par arme : 25 Acier · 5 Compacté</div>
+                <div style="font-size:12px;color:var(--T4);margin-top:2px;">Temps forge : 90s</div>
+              </div>
+              <div class="labo-badges">
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Durée de forge par arme">90s</div>
+                <div class="bt" style="background:var(--Tg7);border-color:var(--Tg9);color:var(--T5);" data-tip="Nécessite 1 titane pour 2 armes">💎 Titane Requis</div>
+              </div>
+            </div>
+            <div class="labo-item" id="card-weapon-petoire" onclick="selectWeapon('petoire')" style="cursor:pointer;border-color:var(--Tg3);background:var(--Tg6);">
+              <div class="labo-thumb" style="background:var(--Tg4);border-color:var(--Tg3);"><img src="petoir.png" onerror="this.style.display='none';this.parentNode.innerHTML='🔫'"></div>
+              <div class="labo-info">
+                <div class="labo-name">Pétoire</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Par arme : 25 Acier · 5 Compacté</div>
+                <div style="font-size:12px;color:var(--T4);margin-top:2px;">Temps forge : 70s</div>
+              </div>
+              <div class="labo-badges">
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Durée de forge par arme">70s</div>
+                <div class="bt" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.4);color:#f87171;" data-tip="Pas besoin de titane pour forger">Sans Titane</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MUNITIONS -->
+        <div>
+          <div class="hub-section-title" style="color:var(--T4);">Catalogue <span style="color:var(--T2);">—</span> Boîtes de Munitions</div>
+          <div class="labo-list">
+            <div class="labo-item" id="card-munition" onclick="toggleMunitions()" style="cursor:pointer;border-color:var(--Tg3);background:var(--Tg6);">
+              <div class="labo-thumb" style="font-size:26px;background:var(--Tg4);border-color:var(--Tg3);">🔫</div>
+              <div class="labo-info">
+                <div class="labo-name">Catalogue Munitions Pistolet</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px;">50 Poudre à Canon + 1 Acier Simple</div>
+                <div style="font-size:12px;color:var(--T4);margin-top:2px;">Poudre à Canon : $20 / u · Acier : $75 / u</div>
+              </div>
+              <div class="labo-badges">
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" id="munition-cout-badge" data-tip="Coût total par boîte : 50 Poudre + 1 Acier">💰 Coût total</div>
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="50×$20 poudre + 1×$75 acier = $1 075">$1 075 / boîte</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GAZ BZ -->
+        <div>
+          <div class="hub-section-title" style="color:var(--T4);">Catalogue <span style="color:var(--T2);">—</span> Gaz BZ</div>
+          <div class="labo-list">
+            <div class="labo-item" id="card-gaz" onclick="toggleGaz()" style="cursor:pointer;border-color:var(--Tg3);background:var(--Tg6);">
+              <div class="labo-thumb" style="font-size:26px;background:var(--Tg4);border-color:var(--Tg3);">🧪</div>
+              <div class="labo-info">
+                <div class="labo-name">Gaz BZ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Produit chimique — Vente directe</div>
+                <div style="font-size:12px;color:var(--T4);margin-top:2px;">Prix de vente : $4 000 / unité</div>
+              </div>
+              <div class="labo-badges">
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Produit chimique — Vente directe">☣️ Chimique</div>
+                <div class="bt" style="background:var(--Tg8);border-color:var(--Tg9);color:var(--T5);" data-tip="Prix de vente unitaire">$4 000 / u</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- HISTORIQUE -->
+      <div id="view-historique-content" class="view-content">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Chiffre d'Affaires Global</div>
+            <div class="stat-value" id="stat-ca-brut" style="color:var(--green2);">$0</div>
+            <div class="stat-sub" id="stat-benefice">Bénéfice estimé: $0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Arme la plus vendue</div>
+            <div class="stat-value" id="stat-weapon" style="font-size:18px;">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Meilleur Client</div>
+            <div class="stat-value" id="stat-client" style="color:var(--T4);font-size:18px;">—</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="hub-section-title">Enregistrer une transaction</div>
+          <form class="form-transaction" onsubmit="addTransaction(event)">
+            <div class="form-group"><label>Date</label><input type="date" id="tx-date" class="form-input" style="background:#0b0d12;" required></div>
+            <div class="form-group"><label>Heure</label><input type="time" id="tx-time" class="form-input" style="background:#0b0d12;" required></div>
+            <div class="form-group">
+              <label>Client</label>
+              <select id="tx-client" class="form-input" style="background:#0b0d12;" required>
+                <option value="Le Cercle">Le Cercle</option><option value="BCF">BCF</option><option value="Saint Reaper">Saint Reaper</option><option value="Saint Clair">Saint Clair</option><option value="Locura">Locura</option><option value="BH">BH</option><option value="Los Hijos">Los Hijos</option><option value="99">99</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Arme vendue <span style="font-size:9px;color:var(--muted2);" id="tx-arme-hint"></span></label>
+              <select id="tx-arme" class="form-input" style="background:#0b0d12;">
+                <option value="">— Aucune —</option><option value="Beretta">Beretta</option><option value="Glock">Glock</option><option value="Pétoire">Pétoire</option><option value="Métaux Seuls">Métaux Seuls</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Munition / Gaz <span style="font-size:9px;color:var(--muted2);">Optionnel</span></label>
+              <select id="tx-mungaz" class="form-input" style="background:#0b0d12;" onchange="onMungazChange(this.value)">
+                <option value="">— Aucun —</option>
+                <option value="Munitions Pistolet">💥 Munitions Pistolet</option>
+                <option value="Gaz BZ">🧪 Gaz BZ</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Quantité</label><input type="number" id="tx-qty" class="form-input" value="1" min="1" required></div>
+            <div class="form-group"><label>Prix Encaissé ($)</label><input type="number" id="tx-price" class="form-input" placeholder="Ex: 25000" min="0" required></div>
+            <div class="form-group"><label>Coût Prod ($) <span style="font-size:9px;color:var(--muted2);">Optionnel</span></label><input type="number" id="tx-cost" class="form-input" placeholder="Ex: 14500" min="0" value="0"></div>
+            <div class="form-group" style="flex-basis:100%;min-width:100%;"><label>Note <span style="font-size:9px;color:var(--muted2);">Optionnel</span></label><input type="text" id="tx-note" class="form-input" placeholder="Ex: payé en 2 fois, deal spécial..."></div>
+            <button type="submit" class="btn-submit">✓ Valider</button>
+          </form>
+        </div>
+
+        <div>
+          <div class="hub-section-title" style="flex-wrap:wrap;gap:10px;">
+            <span>Registre des Ventes</span>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <div class="search-wrap">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="search-input" id="search-input" placeholder="Client, arme..." oninput="renderTransactions()">
+              </div>
+              <div class="filter-row">
+                <span class="chip active" data-period="all" onclick="setPeriod('all')">Tout</span>
+                <span class="chip" data-period="week" onclick="setPeriod('week')">Semaine</span>
+                <span class="chip" data-period="month" onclick="setPeriod('month')">Mois</span>
+              </div>
+              <div class="backup-actions">
+                <button class="btn-backup" onclick="exportPDF()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  PDF
+                </button>
+                <button class="btn-backup" onclick="exportData()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  Sauvegarder
+                </button>
+                <button class="btn-backup" onclick="document.getElementById('import-file-input').click()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 14l-5-5-5 5M12 9v12"/></svg>
+                  Restaurer
+                </button>
+                <input type="file" id="import-file-input" style="display:none;" accept=".json" onchange="importData(event)">
+              </div>
+            </div>
+          </div>
+          <div class="titane-recap" id="titane-recap"></div>
+          <div class="table-container">
+            <table class="histo-table">
+              <thead>
+                <tr>
+                  <th class="sortable" onclick="sortTable('date')">Date / Heure <span class="sort-icon" id="sort-date">↕</span></th>
+                  <th class="sortable" onclick="sortTable('client')">Client <span class="sort-icon" id="sort-client">↕</span></th>
+                  <th>Article</th>
+                  <th class="sortable" onclick="sortTable('qty')">Qté <span class="sort-icon" id="sort-qty">↕</span></th>
+                  <th class="sortable" onclick="sortTable('price')">Montant <span class="sort-icon" id="sort-price">↕</span></th>
+                  <th>Note</th>
+                  <th style="width:90px;"></th>
+                </tr>
+              </thead>
+              <tbody id="histo-table-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-count" id="table-count"></div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="view-dashboard-content" class="view-content">
+        <div>
+          <div class="hub-section-title">
+            <span>Tableau de Bord</span>
+            <div class="filter-row">
+              <span class="chip" data-dash="week" onclick="setDashPeriod('week')">7 jours</span>
+              <span class="chip active" data-dash="month" onclick="setDashPeriod('month')">Ce mois</span>
+              <span class="chip" data-dash="all" onclick="setDashPeriod('all')">Tout</span>
+            </div>
+          </div>
+          <div class="stats-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr);">
+            <div class="stat-card">
+              <div class="stat-label">Chiffre d'Affaires</div>
+              <div class="stat-value" id="dash-ca" style="color:var(--green2);">$0</div>
+              <div class="stat-sub" id="dash-trend">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Bénéfice Réel</div>
+              <div class="stat-value" id="dash-benefice" style="color:var(--T4);">$0</div>
+              <div class="stat-sub" id="dash-titane-detail">Coût titane déduit</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Nb. Ventes</div>
+              <div class="stat-value" id="dash-nb-ventes">0</div>
+              <div class="stat-sub" id="dash-moy">Moy: $0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">vs Mois Précédent</div>
+              <div class="stat-value" id="dash-vs-prev" style="color:#fbbf24;">—</div>
+              <div class="stat-sub" id="dash-vs-prev-sub">Comparaison CA</div>
+            </div>
+          </div>
+          <div class="dash-charts-grid">
+            <div class="dash-chart-box">
+              <div class="dash-chart-title">💰 Revenus par Client</div>
+              <div id="dash-clients-bars"></div>
+            </div>
+            <div class="dash-chart-box">
+              <div class="dash-chart-title">🔫 Armes Vendues</div>
+              <div id="dash-armes-bars"></div>
+            </div>
+            <div class="dash-chart-box" style="grid-column:1/-1;">
+              <div class="dash-chart-title">📈 Ventes par Jour — 7 derniers jours</div>
+              <div style="display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:6px;" id="dash-daily-bars"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CART -->
+    <div class="cart" id="side-cart-panel">
+      <div class="cart-header">
+        <span>Fiche de Commande</span>
+        <span id="cart-badge" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.4);color:var(--T4);font-size:11px;padding:2px 9px;border-radius:10px;font-family:'Rajdhani',sans-serif;font-weight:700;"></span>
+      </div>
+      <div class="cart-items" id="cart-items-target"></div>
+      <div class="cart-footer">
+        <div class="total-bar">
+          <div class="total-label">TOTAL MATÉRIAUX</div>
+          <div class="total-val" id="cart-total-target">$0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// CONFIG
+// ==========================================
+const PRIX_TITANE = 7000;
+const DATA_ARMES = {
+  berreta: { nom:'Beretta', img:'berreta.png', hasTitane:true,  time:90, acier:25, compact:5 },
+  glock:   { nom:'Glock',   img:'glock.png',   hasTitane:true,  time:90, acier:25, compact:5 },
+  petoire: { nom:'Pétoire', img:'petoir.png',  hasTitane:false, time:70, acier:25, compact:5 }
+};
+const GRILLE_PRIX = { acier:75, compact:375 };
+
+let panier = { acier:0, compact:0 };
+let activeWeapons = {}; // { berreta: {qty:1}, glock: {qty:1} }
+let activeWeaponId = null; // kept for compatibility
+let weaponQty = 1;
+let munActive = false;
+let gazActive = false;
+let transactions = JSON.parse(localStorage.getItem('flashback_transactions')) || [];
+let currentPeriod = 'all';
+let dashPeriod = 'month';
+let sortKey = 'date';
+let sortDir = -1;
+
+// ==========================================
+// INIT
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderPanier();
+  initFormDateTime();
+  renderTransactions();
+  startClock();
+});
+
+function startClock() {
+  function tick() {
+    const n = new Date();
+    const pad = v => String(v).padStart(2,'0');
+    const el = document.getElementById('topbar-clock');
+    if(el) el.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+function initFormDateTime() {
+  const n = new Date();
+  const pad = v => String(v).padStart(2,'0');
+  const dateEl = document.getElementById('tx-date');
+  const timeEl = document.getElementById('tx-time');
+  if(dateEl) dateEl.value = `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
+  if(timeEl) timeEl.value = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+}
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+function switchView(view) {
+  const compactBtn = document.getElementById('compact-toggle-btn');
+  const cart = document.getElementById('side-cart-panel');
+  const titleEl = document.getElementById('main-page-title');
+  const cfg = {
+    atelier:    {nav:'nav-atelier',    view:'view-atelier-content',    title:"Atelier Unique",                cart:true},
+    historique: {nav:'nav-historique', view:'view-historique-content', title:"Historique Complet des Ventes", cart:false},
+    dashboard:  {nav:'nav-dashboard',  view:'view-dashboard-content',  title:"Tableau de Bord",               cart:false}
+  }[view];
+  if(!cfg) return;
+
+  // Loader bar
+  showLoader();
+
+  // Animate title
+  titleEl.classList.add('switching');
+  setTimeout(() => {
+    titleEl.textContent = cfg.title;
+    titleEl.classList.remove('switching');
+  }, 180);
+
+  // Slide out current view
+  const current = document.querySelector('.view-content.active');
+  if(current) {
+    current.classList.add('anim-out');
+    setTimeout(() => {
+      current.classList.remove('active','anim-out');
+      // Show new view
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById(cfg.nav).classList.add('active');
+      const next = document.getElementById(cfg.view);
+      next.classList.add('active','anim-in');
+      cart.style.display = cfg.cart ? 'flex' : 'none';
+      if(compactBtn) compactBtn.style.display = cfg.cart ? 'flex' : 'none';
+      if(view === 'historique') initFormDateTime();
+      if(view === 'dashboard') renderDashboard();
+      setTimeout(() => next.classList.remove('anim-in'), 300);
+    }, 160);
+  } else {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.getElementById(cfg.nav).classList.add('active');
+    const next = document.getElementById(cfg.view);
+    next.classList.add('active','anim-in');
+    cart.style.display = cfg.cart ? 'flex' : 'none';
+    if(compactBtn) compactBtn.style.display = cfg.cart ? 'flex' : 'none';
+    if(view === 'historique') initFormDateTime();
+    if(view === 'dashboard') renderDashboard();
+    setTimeout(() => next.classList.remove('anim-in'), 300);
+  }
+}
+
+// ==========================================
+// ATELIER
+// ==========================================
+function renderArmesCatalogue() {
+  const c = document.getElementById('labo-list-target');
+  c.innerHTML = Object.entries(DATA_ARMES).map(([id, a]) => `
+    <div class="labo-item ${activeWeapons[id] ? 'selected':''}" id="card-weapon-${id}" onclick="selectWeapon('${id}')">
+      <div class="labo-thumb"><img src="${a.img}" onerror="this.style.display='none';this.parentNode.innerHTML='🔫'"></div>
+      <div class="labo-info">
+        <div class="labo-name">${a.nom}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Par arme : ${a.acier} Acier · ${a.compact} Compacté</div>
+      </div>
+      <div class="labo-badges">
+        <div class="bt">${a.time}s</div>
+        ${a.hasTitane
+          ? '<div class="bt" style="background:var(--Tg7);color:var(--T5);">💎 Titane Requis</div>'
+          : '<div class="bt" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.4);color:#f87171;">Sans Titane</div>'}
+      </div>
+    </div>`).join('');
+}
+
+function selectWeapon(id) {
+  if(activeWeapons[id]) {
+    delete activeWeapons[id];
+  } else {
+    activeWeapons[id] = { qty: 1 };
+  }
+  document.querySelectorAll('[id^="card-weapon-"]').forEach(el => el.classList.remove('selected'));
+  Object.keys(activeWeapons).forEach(wid => {
+    const el = document.getElementById(`card-weapon-${wid}`);
+    if(el) el.classList.add('selected');
+  });
+  renderPanier();
+}
+
+function changeWeaponQty(id, mod) {
+  if(!activeWeapons[id]) return;
+  activeWeapons[id].qty = Math.max(0, activeWeapons[id].qty + mod);
+  if(activeWeapons[id].qty === 0) {
+    delete activeWeapons[id];
+    const el = document.getElementById(`card-weapon-${id}`);
+    if(el) el.classList.remove('selected');
+  }
+  renderPanier();
+}
+function updateWeaponQtyInput(id, val) {
+  const q = Math.max(0, parseInt(val)||0);
+  if(q === 0) {
+    delete activeWeapons[id];
+    const el = document.getElementById(`card-weapon-${id}`);
+    if(el) el.classList.remove('selected');
+  } else {
+    if(!activeWeapons[id]) activeWeapons[id] = {};
+    activeWeapons[id].qty = q;
+  }
+  renderPanier();
+}
+
+let metalActive = { acier: false, compact: false };
+
+function toggleMetalCard(type) {
+  metalActive[type] = !metalActive[type];
+  if(metalActive[type]) { if(panier[type] === 0) panier[type] = 1; }
+  else { panier[type] = 0; }
+  const el = document.getElementById(`card-${type}`);
+  if(el) el.classList.toggle('selected', metalActive[type]);
+  renderPanier();
+}
+
+function toggleMunitions() {
+  munActive = !munActive;
+  if(munActive) munQty = 1; else munQty = 0;
+  const el = document.getElementById('card-munition');
+  if(el) el.classList.toggle('selected', munActive);
+  renderPanier();
+}
+
+function toggleGaz() {
+  gazActive = !gazActive;
+  if(gazActive) gazQty = 1; else gazQty = 0;
+  const el = document.getElementById('card-gaz');
+  if(el) el.classList.toggle('selected', gazActive);
+  renderPanier();
+}
+
+function changeMetalQty(type, mod) {
+  panier[type] = Math.max(0, panier[type] + mod);
+  if(panier[type] === 0) {
+    metalActive[type] = false;
+    const el = document.getElementById(`card-${type}`);
+    if(el) el.classList.remove('selected');
+  }
+  renderPanier();
+}
+function updateMetalQtyInput(type, val) {
+  panier[type] = Math.max(0, parseInt(val)||0);
+  if(panier[type] === 0) {
+    metalActive[type] = false;
+    const el = document.getElementById(`card-${type}`);
+    if(el) el.classList.remove('selected');
+  }
+  renderPanier();
+}
+
+function updateCartFromShopInput(type, val) { panier[type] = Math.max(0, parseInt(val)||0); renderPanier(); }
+function changeCartQty(type, mod) { panier[type] = Math.max(0, panier[type]+mod); renderPanier(); }
+
+function renderPanier() {
+  const cont = document.getElementById('cart-items-target');
+  const totEl = document.getElementById('cart-total-target');
+  const badge = document.getElementById('cart-badge');
+  const fmt = v => v.toLocaleString('fr-FR');
+  let html = '', total = 0;
+
+  // ---- ARMES (multi) ----
+  Object.entries(activeWeapons).forEach(([wid, wstate]) => {
+    const a = DATA_ARMES[wid];
+    if(!a || wstate.qty <= 0) return;
+    const qty = wstate.qty;
+    const tA = a.acier * qty, tC = a.compact * qty;
+    const pA = tA * GRILLE_PRIX.acier, pC = tC * GRILLE_PRIX.compact;
+    const tit = a.hasTitane ? Math.ceil(qty/2) : 0;
+    total += pA + pC;
+    html += `<div class="cart-section-title" style="margin-top:${html?'14':'0'}px;">🔫 Arme — ${a.nom}</div>
+    <div class="weapon-config-box">
+      <div class="weapon-config-header">
+        <div class="weapon-config-name">Quantité :</div>
+        <div class="weapon-config-qty">
+          <button class="btn-qty" onclick="changeWeaponQty('${wid}',-1)">−</button>
+          <input type="number" class="manual-input" style="width:50px;" value="${qty}" oninput="updateWeaponQtyInput('${wid}',this.value)">
+          <button class="btn-qty" onclick="changeWeaponQty('${wid}',1)">+</button>
+        </div>
+      </div>
+      <div class="weapon-summary-lines">
+        <div class="weapon-summary-line"><span>🪨 Acier Simple :</span><strong style="color:var(--green2);">${tA} u · $${fmt(pA)}</strong></div>
+        <div class="weapon-summary-line"><span>🔩 Acier Compacté :</span><strong style="color:var(--green2);">${tC} u · $${fmt(pC)}</strong></div>
+        ${tit > 0 ? (()=>{
+          // Coverage: combien d'armes sont "couvertes" par les titanes
+          // qty armes, tit = ceil(qty/2) titanes → chaque titane couvre 2 armes
+          // pct = armes couvertes entièrement / qty
+          const armesParTitane = 2;
+          const coveredFull = Math.floor(qty / armesParTitane) * armesParTitane; // armes en paire complète
+          const pct = Math.min(100, Math.round(coveredFull / qty * 100));
+          const isOdd = qty % 2 !== 0;
+          return `<div class="weapon-summary-line"><span>💎 Titane requis :</span><strong style="color:var(--T4);">${tit} u</strong></div>
+        <div class="titane-progress-wrap"><div class="titane-progress-fill" style="width:${isOdd ? Math.round((qty-1)/qty*100) : 100}%;"></div></div>
+        <div class="titane-info-row"><span class="titane-info-label">${isOdd ? '⚠️ Nbre impair — 1 titane utilisé à moitié' : '✓ Toutes les armes couvertes'}</span><span class="titane-info-val">${tit} titane${tit>1?'s':''}</span></div>`;
+        })() : ''}
+      </div>
+    </div>`;
+  });
+
+  // ---- MUNITIONS ----
+  if(munActive && munQty > 0) {
+    const munTotal = munQty * COUT_BOITE;
+    const munPoudre = munQty * 50;
+    const munAcier  = munQty * 1;
+    total += munTotal;
+    html += `<div class="cart-section-title" style="margin-top:14px;">💥 Munitions Pistolet</div>
+    <div class="weapon-config-box">
+      <div class="weapon-config-header">
+        <div class="weapon-config-name">Boîtes :</div>
+        <div class="weapon-config-qty">
+          <button class="btn-qty" onclick="changeMunQty(-1)">−</button>
+          <input type="number" class="manual-input" style="width:50px;" value="${munQty}" oninput="updateMunQty(this.value);renderPanier()">
+          <button class="btn-qty" onclick="changeMunQty(1)">+</button>
+        </div>
+      </div>
+      <div class="weapon-summary-lines">
+        <div class="weapon-summary-line"><span>💥 Poudre à Canon :</span><strong style="color:#fbbf24;">${fmt(munPoudre)} u · $${fmt(munPoudre * PRIX_POUDRE)}</strong></div>
+        <div class="weapon-summary-line"><span>🪨 Acier Simple :</span><strong style="color:var(--green2);">${munAcier} u · $${fmt(munAcier * PRIX_ACIER_MUN)}</strong></div>
+        <div class="weapon-summary-line"><span style="color:#fff;font-weight:600;">Total boîtes :</span><strong style="color:#fbbf24;">$${fmt(munTotal)}</strong></div>
+      </div>
+    </div>`;
+  }
+
+  // ---- GAZ BZ ----
+  if(gazActive && gazQty > 0) {
+    const gazTotal = gazQty * PRIX_GAZ;
+    total += gazTotal;
+    html += `<div class="cart-section-title" style="margin-top:14px;">🧪 Gaz BZ</div>
+    <div class="weapon-config-box" style="border-color:var(--Tg3);">
+      <div class="weapon-config-header">
+        <div class="weapon-config-name">Unités :</div>
+        <div class="weapon-config-qty">
+          <button class="btn-qty" onclick="changeGazQty(-1)">−</button>
+          <input type="number" class="manual-input" style="width:50px;" value="${gazQty}" oninput="updateGazQty(this.value);renderPanier()">
+          <button class="btn-qty" onclick="changeGazQty(1)">+</button>
+        </div>
+      </div>
+      <div class="weapon-summary-lines">
+        <div class="weapon-summary-line"><span>💵 Prix unitaire :</span><strong style="color:var(--T4);">$${fmt(PRIX_GAZ)}</strong></div>
+        <div class="weapon-summary-line"><span style="color:#fff;font-weight:600;">Total Gaz BZ :</span><strong style="color:var(--T4);">$${fmt(gazTotal)}</strong></div>
+      </div>
+    </div>`;
+  }
+
+  // ---- METAUX SUPP ----
+  const metalTypes = [
+    { key:'acier', label:'Acier Simple', icon:'🪨', color:'var(--green2)' },
+    { key:'compact', label:'Acier Compacté', icon:'🔩', color:'var(--T4)' }
+  ];
+  metalTypes.forEach(({key, label, icon, color}) => {
+    if(metalActive[key] && panier[key] > 0) {
+      const sub = panier[key] * GRILLE_PRIX[key];
+      total += sub;
+      html += `<div class="cart-section-title" style="margin-top:14px;">${icon} ${label}</div>
+      <div class="weapon-config-box" style="border-color:var(--Tg3);">
+        <div class="weapon-config-header">
+          <div class="weapon-config-name">Quantité :</div>
+          <div class="weapon-config-qty">
+            <button class="btn-qty" onclick="changeMetalQty('${key}',-1)">−</button>
+            <input type="number" class="manual-input" style="width:50px;" value="${panier[key]}" oninput="updateMetalQtyInput('${key}',this.value)">
+            <button class="btn-qty" onclick="changeMetalQty('${key}',1)">+</button>
+          </div>
+        </div>
+        <div class="weapon-summary-lines">
+          <div class="weapon-summary-line"><span>💵 Prix unitaire :</span><strong style="color:${color};">$${fmt(GRILLE_PRIX[key])}</strong></div>
+          <div class="weapon-summary-line"><span style="color:#fff;font-weight:600;">Total ${label} :</span><strong style="color:${color};">$${fmt(sub)}</strong></div>
+        </div>
+      </div>`;
+    }
+  });
+
+  // Si rien du tout
+  if(html === '') {
+    html = `<div style="text-align:center;padding:40px 15px;color:var(--muted2);">
+      <div style="font-size:32px;margin-bottom:12px;opacity:0.3;">📋</div>
+      <div style="font-size:13px;">Clique sur un article<br>dans le catalogue pour l'ajouter</div>
+    </div>`;
+  }
+
+  cont.innerHTML = html;
+  totEl.textContent = '$' + fmt(total);
+  if(badge) badge.textContent = total > 0 ? '$' + Math.round(total/1000) + 'k' : '';
+}
+
+function updateCartFromRowInput(key, val) {
+  panier[key] = Math.max(0, parseInt(val)||0);
+  const el = document.getElementById(`input-shop-${key}`);
+  if(el) el.value = panier[key];
+  renderPanier();
+}
+
+// ==========================================
+// HISTORIQUE STATS
+// ==========================================
+function updateHistoStats(list) {
+  let ca = 0, cout = 0, armesT = 0;
+  const weapons = {}, clients = {};
+  const noTit = ['Métaux Seuls','Pétoire'];
+  list.forEach(tx => {
+    const l = tx.price * tx.qty;
+    ca += l; cout += tx.cost||0;
+    if(!noTit.includes(tx.arme)) armesT += tx.qty;
+    if(tx.arme !== 'Métaux Seuls') weapons[tx.arme] = (weapons[tx.arme]||0) + tx.qty;
+    clients[tx.client] = (clients[tx.client]||0) + l;
+  });
+  const tit = Math.ceil(armesT/2);
+  const benefice = ca - cout - tit * PRIX_TITANE;
+  window._recap = { tit, armesT, coutTit: tit * PRIX_TITANE };
+  let topW = '—', maxW = 0;
+  Object.entries(weapons).forEach(([n,q]) => { if(q > maxW) { maxW=q; topW=`${n} (x${q})`; }});
+  let topC = '—', maxC = -1;
+  Object.entries(clients).forEach(([c,v]) => { if(v > maxC) { maxC=v; topC=c; }});
+  document.getElementById('stat-ca-brut').textContent = '$' + ca.toLocaleString('fr-FR');
+  document.getElementById('stat-benefice').textContent = `Bénéfice réel : $${benefice.toLocaleString('fr-FR')}`;
+  document.getElementById('stat-weapon').textContent = topW;
+  document.getElementById('stat-client').textContent = topC;
+}
+
+// ==========================================
+// TRANSACTIONS
+// ==========================================
+function onMungazChange(val) {
+  const armeSelect = document.getElementById('tx-arme');
+  const armeHint   = document.getElementById('tx-arme-hint');
+  if(val) {
+    armeSelect.value = '';
+    armeSelect.disabled = true;
+    armeSelect.style.opacity = '0.35';
+    armeSelect.style.cursor  = 'not-allowed';
+    if(armeHint) { armeHint.textContent = '(désactivé)'; armeHint.style.color='#ef4444'; }
+  } else {
+    armeSelect.disabled = false;
+    armeSelect.style.opacity = '1';
+    armeSelect.style.cursor  = '';
+    if(armeHint) { armeHint.textContent = ''; armeHint.style.color=''; }
+  }
+}
+
+function addTransaction(e) {
+  e.preventDefault();
+  showLoader();
+  const pad = v => String(v).padStart(2,'0');
+  const client = document.getElementById('tx-client').value;
+  const armeVal   = document.getElementById('tx-arme').value;
+  const mungazVal = document.getElementById('tx-mungaz').value;
+  // Si munition/gaz sélectionné, ça devient l'article principal
+  const arme = mungazVal || armeVal;
+  if(!arme) { showToast('error','⚠️ Erreur','Sélectionne une arme ou un article (Munitions / Gaz)'); return; }
+  const qty    = parseInt(document.getElementById('tx-qty').value)||1;
+  const price  = parseInt(document.getElementById('tx-price').value)||0;
+  const cost   = parseInt(document.getElementById('tx-cost').value)||0;
+  const iDate  = document.getElementById('tx-date').value;
+  const iTime  = document.getElementById('tx-time').value;
+  let dateStr  = '';
+  if(iDate && iTime) { const [y,mo,d]=iDate.split('-'); dateStr=`${d}/${mo}/${y} - ${iTime}`; }
+  else { const n=new Date(); dateStr=n.toLocaleDateString('fr-FR')+' - '+n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+    const note  = document.getElementById('tx-note').value.trim();
+  transactions.unshift({ id:Date.now(), date:dateStr, client, arme, qty, price, cost, note, _new:true });
+  localStorage.setItem('flashback_transactions', JSON.stringify(transactions));
+  renderTransactions();
+  document.getElementById('tx-qty').value = 1;
+  document.getElementById('tx-price').value = '';
+  document.getElementById('tx-cost').value = '0';
+  document.getElementById('tx-mungaz').value = '';
+  document.getElementById('tx-note').value = '';
+  onMungazChange(''); // réactive le select arme
+  initFormDateTime();
+  showToast('success', '✅ Vente enregistrée', `${qty}x ${arme} — ${client} — $${(price*qty).toLocaleString('fr-FR')}`);
+}
+
+function editTransaction(id) {
+  const tx = transactions.find(t => t.id === id);
+  if(!tx) return;
+  // remove old modal if any
+  document.getElementById('edit-modal')?.remove();
+
+  const clients = ['Le Cercle','BCF','Saint Reaper','Saint Clair','Locura','BH','Los Hijos','99'];
+  const armes   = ['','Beretta','Glock','Pétoire','Métaux Seuls'];
+  const mungaz  = ['','Munitions Pistolet','Gaz BZ'];
+
+  // figure out arme vs mungaz
+  const isMungaz = mungaz.includes(tx.arme) && tx.arme !== '';
+  const armeVal  = isMungaz ? '' : tx.arme;
+  const mungazVal= isMungaz ? tx.arme : '';
+
+  // parse date/time from stored string "DD/MM/YYYY - HH:MM"
+  let dateVal='', timeVal='';
+  try {
+    const parts = tx.date.split(' - ');
+    const [d,m,y] = parts[0].split('/');
+    dateVal = y+'-'+m+'-'+d;
+    timeVal = parts[1]||'';
+  } catch(e) {}
+
+  const modal = document.createElement('div');
+  modal.id = 'edit-modal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">✏️ Modifier la transaction</div>
+      <div class="modal-grid">
+        <div class="form-group"><label>Date</label><input type="date" id="edit-date" class="form-input" style="background:#0b0d12;" value="${dateVal}"></div>
+        <div class="form-group"><label>Heure</label><input type="time" id="edit-time" class="form-input" style="background:#0b0d12;" value="${timeVal}"></div>
+        <div class="form-group"><label>Client</label>
+          <select id="edit-client" class="form-input" style="background:#0b0d12;">
+            ${clients.map(c=>`<option value="${c}" ${c===tx.client?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Arme vendue</label>
+          <select id="edit-arme" class="form-input" style="background:#0b0d12;" ${isMungaz?'disabled style="opacity:0.35;background:#0b0d12;"':''}>
+            ${armes.map(a=>`<option value="${a}" ${a===armeVal?'selected':''}>${a||'— Aucune —'}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Munition / Gaz</label>
+          <select id="edit-mungaz" class="form-input" style="background:#0b0d12;" onchange="onEditMungazChange(this.value)">
+            ${mungaz.map(m=>`<option value="${m}" ${m===mungazVal?'selected':''}>${m||'— Aucun —'}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Quantité</label><input type="number" id="edit-qty" class="form-input" value="${tx.qty}" min="1"></div>
+        <div class="form-group"><label>Prix Encaissé ($)</label><input type="number" id="edit-price" class="form-input" value="${tx.price}" min="0"></div>
+        <div class="form-group"><label>Coût Prod ($)</label><input type="number" id="edit-cost" class="form-input" value="${tx.cost||0}" min="0"></div>
+      </div>
+      <div class="form-group"><label>Note</label><input type="text" id="edit-note" class="form-input" value="${tx.note||''}" placeholder="Ex: payé en 2 fois..."></div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="document.getElementById('edit-modal').remove()">Annuler</button>
+        <button class="btn-modal-save" onclick="saveEdit(${id})">💾 Sauvegarder</button>
+      </div>
+    </div>`;
+  modal.onclick = () => modal.remove();
+  document.body.appendChild(modal);
+}
+
+function onEditMungazChange(val) {
+  const armeSelect = document.getElementById('edit-arme');
+  if(!armeSelect) return;
+  if(val) { armeSelect.value=''; armeSelect.disabled=true; armeSelect.style.opacity='0.35'; }
+  else    { armeSelect.disabled=false; armeSelect.style.opacity='1'; }
+}
+
+function saveEdit(id) {
+  const idx = transactions.findIndex(t => t.id === id);
+  if(idx === -1) return;
+  const armeVal   = document.getElementById('edit-arme').value;
+  const mungazVal = document.getElementById('edit-mungaz').value;
+  const arme = mungazVal || armeVal;
+  if(!arme) { showToast('error','⚠️ Erreur','Sélectionne une arme ou un article'); return; }
+  const iDate = document.getElementById('edit-date').value;
+  const iTime = document.getElementById('edit-time').value;
+  let dateStr = transactions[idx].date;
+  if(iDate && iTime) { const [y,mo,d]=iDate.split('-'); dateStr=`${d}/${mo}/${y} - ${iTime}`; }
+  transactions[idx] = {
+    ...transactions[idx],
+    date: dateStr,
+    client: document.getElementById('edit-client').value,
+    arme,
+    qty:   parseInt(document.getElementById('edit-qty').value)||1,
+    price: parseInt(document.getElementById('edit-price').value)||0,
+    cost:  parseInt(document.getElementById('edit-cost').value)||0,
+    note:  document.getElementById('edit-note').value.trim(),
+  };
+  localStorage.setItem('flashback_transactions', JSON.stringify(transactions));
+  document.getElementById('edit-modal').remove();
+  renderTransactions();
+  showToast('success','✅ Modifiée','Transaction mise à jour');
+}
+
+let clientFilter = null;
+
+function filterByClient(name) {
+  if(clientFilter === name) {
+    // deselect
+    clientFilter = null;
+    document.getElementById('search-input').value = '';
+    document.getElementById('client-filter-badge')?.remove();
+  } else {
+    clientFilter = name;
+    document.getElementById('search-input').value = '';
+    // show badge
+    let badge = document.getElementById('client-filter-badge');
+    if(!badge) {
+      badge = document.createElement('span');
+      badge.id = 'client-filter-badge';
+      badge.style.cssText = 'background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:var(--T4);font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:Rajdhani,sans-serif;display:inline-flex;align-items:center;gap:5px;';
+      badge.onclick = () => filterByClient(name);
+      document.querySelector('.filter-row').after(badge);
+    }
+    badge.innerHTML = '👤 ' + name + ' <span style="opacity:0.6;">✕</span>';
+  }
+  renderTransactions();
+}
+
+function deleteTransaction(id) {
+  if(!confirm('Supprimer cette transaction ?')) return;
+  transactions = transactions.filter(tx => tx.id !== id);
+  localStorage.setItem('flashback_transactions', JSON.stringify(transactions));
+  renderTransactions();
+  showToast('error', '🗑️ Supprimée', 'Transaction retirée du registre');
+}
+
+function setPeriod(p) {
+  currentPeriod = p;
+  document.querySelectorAll('.chip[data-period]').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.chip[data-period="${p}"]`).classList.add('active');
+  renderTransactions();
+}
+
+function sortTable(key) {
+  if(sortKey === key) sortDir *= -1; else { sortKey=key; sortDir=-1; }
+  document.querySelectorAll('.sort-icon').forEach(el => el.textContent='↕');
+  const el = document.getElementById(`sort-${key}`);
+  if(el) el.textContent = sortDir === -1 ? '↓' : '↑';
+  renderTransactions();
+}
+
+function getFiltered(period) {
+  const now = new Date();
+  return transactions.filter(tx => {
+    if(period === 'all') return true;
+    const [d,m,y] = tx.date.split(' - ')[0].split('/');
+    const txDate = new Date(y,m-1,d);
+    if(period === 'week') return (now-txDate)/86400000 <= 7;
+    if(period === 'month') return txDate.getMonth()===now.getMonth() && txDate.getFullYear()===now.getFullYear();
+    return true;
+  });
+}
+
+function renderTransactions() {
+  const tbody = document.getElementById('histo-table-tbody');
+  const search = (document.getElementById('search-input')?.value||'').toLowerCase().trim();
+  let list = getFiltered(currentPeriod);
+  if(search) list = list.filter(tx => tx.client.toLowerCase().includes(search) || tx.arme.toLowerCase().includes(search) || tx.date.includes(search));
+  if(clientFilter) list = list.filter(tx => tx.client === clientFilter);
+
+  list.sort((a,b) => {
+    let av, bv;
+    if(sortKey==='date')  { av=a.date; bv=b.date; }
+    else if(sortKey==='client') { av=a.client; bv=b.client; }
+    else if(sortKey==='qty')    { av=a.qty; bv=b.qty; }
+    else if(sortKey==='price')  { av=a.price*a.qty; bv=b.price*b.qty; }
+    return av<bv ? -sortDir : av>bv ? sortDir : 0;
+  });
+
+  updateHistoStats(list);
+  const countEl = document.getElementById('table-count');
+  if(countEl) countEl.textContent = `${list.length} transaction${list.length>1?'s':''}`;
+
+  if(list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Aucune vente trouvée</div><div class="empty-sub">${search?'Essaie une autre recherche':'Aucune vente pour cette période'}</div></div></td></tr>`;
+    document.getElementById('titane-recap').style.display = 'none';
+    return;
+  }
+
+  tbody.innerHTML = list.map(tx => {
+    const ligne = tx.price * tx.qty;
+    const isNew = tx._new; if(isNew) delete tx._new;
+
+    let articleBadge;
+    if(tx.arme === 'Munitions Pistolet') {
+      articleBadge = `<span style="display:inline-flex;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);border-radius:5px;padding:3px 9px;font-family:'Rajdhani',sans-serif;font-size:13px;color:#fbbf24;">💥 ${tx.arme}</span>`;
+    } else if(tx.arme === 'Gaz BZ') {
+      articleBadge = `<span style="display:inline-flex;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.4);border-radius:5px;padding:3px 9px;font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--T4);">🧪 ${tx.arme}</span>`;
+    } else {
+      articleBadge = `<span class="arme-badge">${tx.arme}</span>`;
+    }
+
+    return `<tr class="${isNew?'row-new':''}">
+      <td style="color:var(--muted);font-size:13px;">${tx.date}</td>
+      <td><span class="client-badge" style="cursor:pointer;" onclick="filterByClient('${tx.client}')">${tx.client}</span></td>
+      <td>${articleBadge}</td>
+      <td style="font-family:'Rajdhani',sans-serif;font-weight:700;">×${tx.qty}</td>
+      <td style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--green2);">$${ligne.toLocaleString('fr-FR')}</td>
+      <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${tx.note||''}">${tx.note ? '📝 '+tx.note : ''}</td>
+      <td style="display:flex;gap:4px;align-items:center;">
+        <button class="btn-delete" style="color:var(--T4);opacity:0.6;" title="Modifier" onclick="editTransaction(${tx.id})">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn-delete" onclick="deleteTransaction(${tx.id})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const r = window._recap||{};
+  const recEl = document.getElementById('titane-recap');
+  if(recEl && r.tit > 0) {
+    recEl.style.display='flex';
+    recEl.innerHTML=`<span style="color:var(--muted);font-size:13px;">💎 Titane global (${r.armesT} armes) :</span><span style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--T4);">${r.tit} titane${r.tit>1?'s':''} nécessaires</span><span style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--danger);">−$${r.coutTit.toLocaleString('fr-FR')}</span>`;
+  } else if(recEl) recEl.style.display='none';
+}
+
+// ==========================================
+// DASHBOARD
+// ==========================================
+function setDashPeriod(p) {
+  dashPeriod = p;
+  document.querySelectorAll('.chip[data-dash]').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.chip[data-dash="${p}"]`).classList.add('active');
+  renderDashboard();
+}
+
+function renderDashboard() {
+  const noTit = ['Metaux Seuls','Petoire','Métaux Seuls','Pétoire'];
+  const list = getFiltered(dashPeriod);
+  let ca=0, cout=0, armesT=0;
+  const clientsCA={}, armesCount={};
+  list.forEach(tx => {
+    const l = tx.price*tx.qty;
+    ca+=l; cout+=tx.cost||0;
+    if(!noTit.includes(tx.arme)) armesT+=tx.qty;
+    clientsCA[tx.client]=(clientsCA[tx.client]||0)+l;
+    if(!['Metaux Seuls','Métaux Seuls'].includes(tx.arme)) armesCount[tx.arme]=(armesCount[tx.arme]||0)+tx.qty;
+  });
+  const tit=Math.ceil(armesT/2), benefice=ca-cout-tit*PRIX_TITANE, moy=list.length>0?Math.round(ca/list.length):0;
+  document.getElementById('dash-ca').textContent = '$'+ca.toLocaleString('fr-FR');
+  document.getElementById('dash-benefice').textContent = '$'+benefice.toLocaleString('fr-FR');
+  document.getElementById('dash-benefice').style.color = benefice>=0?getComputedStyle(document.documentElement).getPropertyValue('--T4').trim():'#ef4444';
+  const titEl = document.getElementById('dash-titane-detail');
+  if(titEl) titEl.textContent = tit > 0 ? `−$${(tit*PRIX_TITANE).toLocaleString('fr-FR')} titane (${tit}u)` : 'Pas de titane déduit';
+  document.getElementById('dash-nb-ventes').textContent = list.length;
+  document.getElementById('dash-moy').textContent = 'Moy: $'+moy.toLocaleString('fr-FR');
+  document.getElementById('dash-trend').textContent = tit > 0 ? '💎 '+tit+' titane'+(tit>1?'s':'')+' utilisé'+(tit>1?'s':'')+' (voir bénéfice →)' : '—';
+
+  // Comparaison mois précédent (toujours calculée sur les mois calendaires)
+  const nowD = new Date();
+  const thisMonth = nowD.getMonth(), thisYear = nowD.getFullYear();
+  const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+  const prevYear  = thisMonth === 0 ? thisYear - 1 : thisYear;
+  const monthNames = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  let caCurrent = 0, caPrev = 0;
+  transactions.forEach(tx => {
+    try {
+      const [d,m,y] = tx.date.split(' - ')[0].split('/');
+      const txM = parseInt(m)-1, txY = parseInt(y);
+      const l = tx.price * tx.qty;
+      if(txM === thisMonth && txY === thisYear) caCurrent += l;
+      if(txM === prevMonth && txY === prevYear)  caPrev    += l;
+    } catch(e) {}
+  });
+  const vsEl    = document.getElementById('dash-vs-prev');
+  const vsSubEl = document.getElementById('dash-vs-prev-sub');
+  if(vsEl && vsSubEl) {
+    if(caPrev === 0 && caCurrent === 0) {
+      vsEl.textContent = '—'; vsEl.style.color='#8b9ab5';
+      vsSubEl.textContent = 'Pas encore de données';
+    } else if(caPrev === 0) {
+      vsEl.textContent = 'Nouveau'; vsEl.style.color='#4ade80';
+      vsSubEl.textContent = 'Aucune vente en '+monthNames[prevMonth];
+    } else {
+      const pct = Math.round((caCurrent - caPrev) / caPrev * 100);
+      const sign = pct >= 0 ? '+' : '';
+      vsEl.textContent = sign + pct + '%';
+      vsEl.style.color = pct >= 0 ? '#4ade80' : '#ef4444';
+      vsSubEl.textContent = monthNames[prevMonth]+' : $'+caPrev.toLocaleString('fr-FR');
+    }
+  }
+
+  const T1=getComputedStyle(document.documentElement).getPropertyValue('--T1').trim(); const maxCA=Math.max(...Object.values(clientsCA),1), cols=[T1,T1,T1,T1,T1,T1];
+  document.getElementById('dash-clients-bars').innerHTML = Object.entries(clientsCA).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([n,v],i)=>`
+    <div class="dash-bar-row"><div class="dash-bar-label">${n}</div><div class="dash-bar-wrap"><div class="dash-bar-fill" style="width:${Math.round(v/maxCA*100)}%;background:${cols[i%cols.length]};"></div></div><div class="dash-bar-val">$${Math.round(v/1000)}k</div></div>`).join('')||'<div style="color:var(--muted);font-size:13px;padding:10px 0;">Aucune donnée</div>';
+
+  const maxA=Math.max(...Object.values(armesCount),1), aCols={Beretta:'#22c55e',Glock:'#4ade80','Pétoire':'#86efac'};
+  document.getElementById('dash-armes-bars').innerHTML = Object.entries(armesCount).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`
+    <div class="dash-bar-row"><div class="dash-bar-label">${n}</div><div class="dash-bar-wrap"><div class="dash-bar-fill" style="width:${Math.round(v/maxA*100)}%;background:${aCols[n]||'#4ade80'};"></div></div><div class="dash-bar-val">${v} u</div></div>`).join('')||'<div style="color:var(--muted);font-size:13px;padding:10px 0;">Aucune donnée</div>';
+
+  const now=new Date();
+  const days=Array.from({length:7},(_,i)=>{const d=new Date(now);d.setDate(d.getDate()-(6-i));return d;});
+  const lbels=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const tots=days.map(day=>transactions.filter(tx=>{const[d,m,y]=tx.date.split(' - ')[0].split('/');return new Date(y,m-1,d).toDateString()===day.toDateString();}).reduce((s,tx)=>s+tx.price*tx.qty,0));
+  const maxD=Math.max(...tots,1);
+  document.getElementById('dash-daily-bars').innerHTML=days.map((day,i)=>{
+    const h=Math.max(4,Math.round(tots[i]/maxD*80)),isToday=day.toDateString()===now.toDateString();
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end;">
+      ${tots[i]>0?`<div style="font-size:10px;color:var(--muted);">$${Math.round(tots[i]/1000)}k</div>`:''}
+      <div style="width:100%;height:${h}px;background:${isToday?'var(--T1)':'var(--Tg3)'};border-radius:3px 3px 0 0;"></div>
+      <div style="font-size:10px;color:${isToday?'#fff':'var(--muted)'};">${lbels[day.getDay()]}</div>
+    </div>`;
+  }).join('');
+}
+
+// ==========================================
+// EXPORT PDF
+// ==========================================
+function exportPDF() {
+  const search = (document.getElementById('search-input')?.value||'').toLowerCase().trim();
+  let list = getFiltered(currentPeriod);
+  if(search) list = list.filter(tx => tx.client.toLowerCase().includes(search)||tx.arme.toLowerCase().includes(search));
+  if(list.length === 0) { showToast('error','⚠️ Export PDF','Aucune transaction à exporter'); return; }
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFillColor(11,13,18); doc.rect(0,0,210,297,'F');
+  doc.setTextColor(139,92,246); doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.text('FLASHBACK',15,22);
+  doc.setTextColor(180,180,200); doc.setFontSize(11); doc.text('Registre des Ventes — '+new Date().toLocaleDateString('fr-FR'),15,31);
+  let ca=0; list.forEach(tx=>ca+=tx.price*tx.qty);
+  doc.setTextColor(74,222,128); doc.setFontSize(13); doc.text('CA Total : $'+ca.toLocaleString('fr-FR'),15,44);
+  doc.setTextColor(140,140,160); doc.setFontSize(10); doc.text(`${list.length} transaction(s) — Généré le ${new Date().toLocaleString('fr-FR')}`,15,52);
+  doc.autoTable({
+    startY:58,
+    head:[['Date / Heure','Client','Arme','Qté','Montant']],
+    body:list.map(tx=>[ tx.date, tx.client, tx.arme, 'x'+tx.qty, '$'+(tx.price*tx.qty).toLocaleString('fr-FR') ]),
+    styles:{fillColor:[17,19,24],textColor:[220,220,230],fontSize:10,cellPadding:5},
+    headStyles:{fillColor:[30,33,48],textColor:[139,92,246],fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[22,24,32]},
+    theme:'grid', tableLineColor:[40,45,60], tableLineWidth:0.1,
+  });
+  const n=new Date();
+  doc.save(`flashback_${n.getDate()}_${n.getMonth()+1}_${n.getFullYear()}.pdf`);
+  showToast('success','📄 PDF Exporté',`${list.length} transactions exportées`);
+}
+
+// ==========================================
+// BACKUP
+// ==========================================
+function exportData() {
+  if(!transactions.length) { showToast('error','⚠️ Sauvegarde','Historique vide !'); return; }
+  const n=new Date();
+  const str="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(transactions,null,2));
+  const a=document.createElement('a');
+  a.setAttribute('href',str);
+  a.setAttribute('download',`flashback_save_${n.getDate()}_${n.getMonth()+1}_${n.getFullYear()}.json`);
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('success','💾 Sauvegarde réussie',`${transactions.length} transactions exportées`);
+}
+
+function importData(event) {
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imp = JSON.parse(e.target.result);
+      if(Array.isArray(imp)) {
+        if(confirm(`Fusionner les ${imp.length} ventes importées avec l'historique actuel ?`)) {
+          const ids = new Set(transactions.map(tx=>tx.id));
+          transactions = [...imp.filter(tx=>!ids.has(tx.id)), ...transactions];
+        } else transactions = imp;
+        localStorage.setItem('flashback_transactions', JSON.stringify(transactions));
+        renderTransactions();
+        showToast('success','✅ Données restaurées',`${transactions.length} transactions chargées`);
+      } else showToast('error','❌ Erreur','Format de fichier invalide');
+    } catch(err) { showToast('error','❌ Erreur','Impossible de lire le fichier'); }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ==========================================
+// MUNITIONS
+// ==========================================
+let munQty = 1;
+const PRIX_POUDRE = 20;
+const PRIX_ACIER_MUN = 75;
+const COUT_BOITE = (50 * PRIX_POUDRE) + PRIX_ACIER_MUN; // 1075
+
+function changeMunQty(mod) {
+  munQty = Math.max(0, munQty + mod);
+  if(munQty === 0) { munActive = false; const el = document.getElementById('card-munition'); if(el) el.classList.remove('selected'); }
+  const el = document.getElementById('input-mun-qty');
+  if(el) el.value = munQty;
+  renderMunitions();
+  renderPanier();
+}
+function updateMunQty(val) {
+  munQty = Math.max(0, parseInt(val)||0);
+  if(munQty === 0) { munActive = false; const el = document.getElementById('card-munition'); if(el) el.classList.remove('selected'); }
+  renderMunitions();
+  renderPanier();
+}
+function renderMunitions() {
+  const poudre = 50 * munQty;
+  const acier  = 1  * munQty;
+  const total  = COUT_BOITE * munQty;
+  const fmt = v => v.toLocaleString('fr-FR');
+  const el = (id) => document.getElementById(id);
+  if(el('mun-poudre')) el('mun-poudre').textContent = `${fmt(poudre)} u · $${fmt(poudre * PRIX_POUDRE)}`;
+  if(el('mun-acier'))  el('mun-acier').textContent  = `${fmt(acier)} u · $${fmt(acier * PRIX_ACIER_MUN)}`;
+  if(el('mun-total'))  el('mun-total').textContent  = `$${fmt(total)}`;
+  if(el('munition-cout-badge')) el('munition-cout-badge').textContent = `$${fmt(COUT_BOITE)} / boîte`;
+}
+
+// ==========================================
+// GAZ BZ
+// ==========================================
+let gazQty = 1;
+const PRIX_GAZ = 4000;
+
+function changeGazQty(mod) {
+  gazQty = Math.max(0, gazQty + mod);
+  if(gazQty === 0) { gazActive = false; const el = document.getElementById('card-gaz'); if(el) el.classList.remove('selected'); }
+  const el = document.getElementById('input-gaz-qty');
+  if(el) el.value = gazQty;
+  renderGaz();
+  renderPanier();
+}
+function updateGazQty(val) {
+  gazQty = Math.max(0, parseInt(val)||0);
+  if(gazQty === 0) { gazActive = false; const el = document.getElementById('card-gaz'); if(el) el.classList.remove('selected'); }
+  renderGaz();
+  renderPanier();
+}
+function renderGaz() {
+  const total = gazQty * PRIX_GAZ;
+  const fmt = v => v.toLocaleString('fr-FR');
+  const el = (id) => document.getElementById(id);
+  if(el('gaz-qty-display')) el('gaz-qty-display').textContent = `${gazQty} u`;
+  if(el('gaz-total'))       el('gaz-total').textContent       = `$${fmt(total)}`;
+}
+
+// ==========================================
+// PAGE LOADER BAR
+// ==========================================
+function showLoader() {
+  let bar = document.getElementById('page-loader');
+  if(!bar) { bar = document.createElement('div'); bar.id='page-loader'; document.body.appendChild(bar); }
+  bar.style.width = '0%';
+  bar.classList.add('active');
+  setTimeout(() => { bar.style.width = '60%'; }, 10);
+  setTimeout(() => { bar.style.width = '90%'; }, 150);
+  setTimeout(() => { bar.style.width = '100%'; }, 300);
+  setTimeout(() => { bar.classList.remove('active'); bar.style.width = '0%'; }, 520);
+}
+
+// ripple removed
+
+// ==========================================
+// PARTICLES
+// ==========================================
+(function initParticles() {
+  const canvas = document.getElementById('particles-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  const COLORS = ['rgba(139,92,246,', 'rgba(109,40,217,', 'rgba(167,139,250,'];
+  
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  
+  function mkParticle() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.3,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      alpha: Math.random() * 0.6 + 0.1,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)]
+    };
+  }
+  
+  function init() { particles = Array.from({length: 80}, mkParticle); }
+  
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Draw connection lines
+    for(let i = 0; i < particles.length; i++) {
+      for(let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 120) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(139,92,246,${0.08 * (1 - dist/120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+    // Draw particles
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if(p.x < 0) p.x = W; if(p.x > W) p.x = 0;
+      if(p.y < 0) p.y = H; if(p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color + p.alpha + ')';
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  
+  /* particles disabled */
+  // resize(); init(); draw();
+  window.addEventListener('resize', () => { resize(); });
+  
+  // Update particle colors based on theme
+  window.updateParticleColors = function(theme) {
+    const themeColors = {
+      violet: ['rgba(139,92,246,','rgba(109,40,217,','rgba(167,139,250,'],
+      red:    ['rgba(239,68,68,','rgba(220,38,38,','rgba(248,113,113,'],
+      matrix: ['rgba(34,197,94,','rgba(22,163,74,','rgba(74,222,128,'],
+      black: ['rgba(200,205,220,','rgba(160,165,180,','rgba(240,242,247,'],
+      white: ['rgba(26,26,46,','rgba(50,50,80,','rgba(80,80,120,']
+    };
+    const cols = themeColors[theme] || themeColors.violet;
+    particles.forEach(p => { p.color = cols[Math.floor(Math.random() * cols.length)]; });
+  };})();
+
+// ==========================================
+// THEME SWITCHER
+// ==========================================
+function setTheme(theme) {
+  document.body.classList.remove('theme-red','theme-matrix','theme-black','theme-white');
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+  const labels = {violet:'Violet', red:'Rouge', matrix:'Matrix', black:'Noir', white:'Blanc'};
+  const lbl = document.getElementById('theme-label');
+  if(theme === 'red') {
+    document.body.classList.add('theme-red');
+    document.getElementById('dot-red').classList.add('active');
+  } else if(theme === 'matrix') {
+    document.body.classList.add('theme-matrix');
+    document.getElementById('dot-matrix').classList.add('active');
+  } else if(theme === 'black') {
+    document.body.classList.add('theme-black');
+    document.getElementById('dot-black').classList.add('active');
+  } else if(theme === 'white') {
+    document.body.classList.add('theme-white');
+    document.getElementById('dot-white').classList.add('active');
+  } else {
+    document.getElementById('dot-violet').classList.add('active');
+  }
+  if(lbl) lbl.textContent = labels[theme] || 'Violet';
+  if(window.updateParticleColors) window.updateParticleColors(theme);
+  localStorage.setItem('flashback_theme', theme);
+}
+
+// Restore saved theme
+(function() {
+  const saved = localStorage.getItem('flashback_theme');
+  if(saved) setTheme(saved);
+  else { const lbl = document.getElementById('theme-label'); if(lbl) lbl.textContent = 'Violet'; }
+})();
+
+// ==========================================
+// COMPACT MODE
+// ==========================================
+function toggleCompact() {
+  const btn = document.getElementById('compact-toggle-btn');
+  const isOn = document.body.classList.toggle('compact');
+  btn.classList.toggle('on', isOn);
+  localStorage.setItem('flashback_compact', isOn ? '1' : '0');
+}
+
+// Restore compact state
+(function() {
+  if(localStorage.getItem('flashback_compact') === '1') {
+    document.body.classList.add('compact');
+    const btn = document.getElementById('compact-toggle-btn');
+    if(btn) btn.classList.add('on');
+  }
+})();
+
+function showToast(type, title, msg) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<div class="toast-body"><div class="toast-title">${title}</div>${msg?`<div class="toast-msg">${msg}</div>`:''}</div><button class="toast-close" onclick="removeToast(this.parentElement)">✕</button>`;
+  c.appendChild(t);
+  setTimeout(() => removeToast(t), 4000);
+}
+function removeToast(el) {
+  if(!el||!el.parentElement) return;
+  el.classList.add('out');
+  setTimeout(() => el.remove(), 250);
+}
+</script>
+</body>
+</html>
